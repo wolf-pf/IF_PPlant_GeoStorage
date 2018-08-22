@@ -1,0 +1,25 @@
+id;s;s_id;t;t_id;m;m_unit;p;p_unit;h;h_unit;T;T_unit;x;x_unit;INCOMP::S800;air
+0x7fa8b6e7f080;fresh air;out1;compressor train_inlet;in3;217.35944448077146;kg / s;1.0;bar;419.40807045722073;kJ / kg;20.0;C;nan;nan;0;1
+0x7fa8b6e7f9e8;compressor train_outlet;out3;after cooler;in1;217.35944448077146;kg / s;44.73304473304473;bar;437.54971710967357;kJ / kg;46.19254280206508;C;nan;nan;0;1
+0x7fa8b6e7fb70;after cooler;out1;cas;in1;217.35944448077146;kg / s;44.285714285714285;bar;414.93016148677464;kJ / kg;24.999999999996874;C;nan;nan;0;1
+0x7fa8c64b79e8;cold reservoir;out1;compressor train_inlet;in1;318.1771381265361;kg / s;10.0;bar;16.856579442031855;kJ / kg;30.0;C;nan;nan;1;0
+0x7fa8b6e63be0;compressor train_outlet;out1;hot reservoir;in1;318.1771381265361;kg / s;8.0;bar;362.97614156019904;kJ / kg;223.4793209279395;C;nan;nan;1;0
+0x7fa8b6e636d8;source;out1;compressor train_inlet;in2;0.0;kg / s;8.0;bar;16.704114858722548;kJ / kg;30.0;C;nan;nan;1;0
+0x7fa8b6e63438;compressor train_outlet;out2;sink;in1;0.0;kg / s;10.0;bar;16.856579442031855;kJ / kg;30.0;C;nan;nan;1;0
+0x7fa8b6eac7b8;compressor train_inlet;out1;compressor train_splitter_0;in1;318.1771381265361;kg / s;10.0;bar;16.856579442031855;kJ / kg;30.0;C;nan;nan;1;0
+0x7fa8b6f147b8;compressor train_merge_0;out1;compressor train_outlet;in1;318.1771381265361;kg / s;8.0;bar;362.97614156019904;kJ / kg;223.4793209279395;C;nan;nan;1;0
+0x7fa8b6f02550;compressor train_inlet;out3;compressor train_compressor_0;in1;217.35944448077146;kg / s;1.0;bar;419.40807045722073;kJ / kg;20.0;C;nan;nan;0;1
+0x7fa8b6eacef0;compressor train_compressor_0;out1;compressor train_heat exchanger_0;in1;217.35944448077146;kg / s;5.0;bar;621.643762413622;kJ / kg;219.5304896112733;C;nan;nan;0;1
+0x7fa8b6eb6668;compressor train_splitter_0;out1;compressor train_heat exchanger_0;in2;133.11748423308956;kg / s;10.0;bar;16.856579442031855;kJ / kg;30.0;C;nan;nan;1;0
+0x7fa8b6ec4668;compressor train_heat exchanger_0;out2;compressor train_vessel_0;in1;133.11748423308956;kg / s;9.968690257329964;bar;317.6830775903347;kJ / kg;200.00000000000006;C;nan;nan;1;0
+0x7fa8b6ec4f98;compressor train_vessel_0;out1;compressor train_merge_0;in2;133.11748423308956;kg / s;8.0;bar;317.6830775903347;kJ / kg;200.05575785082226;C;nan;nan;1;0
+0x7fa8b6ec44e0;compressor train_splitter_0;out2;compressor train_splitter_1;in1;185.0596538934465;kg / s;10.0;bar;16.856579442031855;kJ / kg;30.0;C;nan;nan;1;0
+0x7fa8b6e58668;compressor train_merge_1;out1;compressor train_merge_0;in1;185.0596538934465;kg / s;8.0;bar;395.5564398695663;kJ / kg;240.04069187924813;C;nan;nan;1;0
+0x7fa8b6e587f0;compressor train_heat exchanger_0;out1;compressor train_compressor_1;in1;217.35944448077146;kg / s;4.9969187177872945;bar;437.40853527724227;kJ / kg;38.70981013586527;C;nan;nan;0;1
+0x7fa8b6e58978;compressor train_compressor_1;out1;compressor train_heat exchanger_1;in1;217.35944448077146;kg / s;44.788099985279075;bar;759.974469655523;kJ / kg;352.0896394188495;C;nan;nan;0;1
+0x7fa8b6e58b00;compressor train_splitter_1;out1;compressor train_heat exchanger_1;in2;185.0596538934465;kg / s;10.0;bar;16.856579442031855;kJ / kg;30.0;C;nan;nan;1;0
+0x7fa8b6e58c88;compressor train_heat exchanger_1;out2;compressor train_vessel_1;in1;185.0596538934465;kg / s;9.981522323043531;bar;395.5564398695663;kJ / kg;240.00000000000023;C;nan;nan;1;0
+0x7fa8b6e58e10;compressor train_vessel_1;out1;compressor train_merge_1;in2;185.0596538934465;kg / s;8.0;bar;395.5564398695663;kJ / kg;240.04069187924813;C;nan;nan;1;0
+0x7fa8b6e58f98;compressor train_splitter_1;out2;compressor train_outlet;in2;0.0;kg / s;10.0;bar;16.856579442031855;kJ / kg;30.0;C;nan;nan;1;0
+0x7fa8b6e58f60;compressor train_inlet;out2;compressor train_merge_1;in1;0.0;kg / s;8.0;bar;16.704114858722548;kJ / kg;30.0;C;nan;nan;1;0
+0x7fa8b6e632e8;compressor train_heat exchanger_1;out1;compressor train_outlet;in3;217.35944448077146;kg / s;44.73304473304473;bar;437.54971710967357;kJ / kg;46.19254280206508;C;nan;nan;0;1

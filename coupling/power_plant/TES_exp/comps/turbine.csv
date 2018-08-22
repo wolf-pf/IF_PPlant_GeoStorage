@@ -1,0 +1,3 @@
+label;cp;busses;bus_factors;mode;design;offdesign;P;P_set;P_var;eta_s;eta_s_set;eta_s_var;pr;pr_set;pr_var;Sirr;Sirr_set;Sirr_var;eta_s_char;eta_s_char_set;eta_s_char_method;eta_s_char_param;cone;cone_set;cone_method;cone_param
+turb1;turbine;['0x7f53a4797550'];[1];auto;['pr', 'eta_s'];['eta_s_char'];-43579116.35773168;False;False;0.6999999999999964;True;False;0.11839193918402287;False;False;62896.48854205012;False;False;0x7f539349eeb8;False;TRAUPEL;dh_s;0x7f539349efd0;False;default;nan
+turb2;turbine;['0x7f53a4797550'];[1];auto;['pr', 'eta_s'];['eta_s_char', 'cone'];-51849654.359044574;False;False;0.925;True;False;0.15598376722745108;False;False;14225.147421719019;False;False;0x7f539349eac8;False;TRAUPEL;dh_s;0x7f539349ed30;False;default;nan

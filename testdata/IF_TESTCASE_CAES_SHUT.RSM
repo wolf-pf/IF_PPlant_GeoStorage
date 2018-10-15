@@ -1,0 +1,161 @@
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	YEARS       	DAY         	MONTH       	YEAR        	FPR         	FWPR        	WGIR        	WGIR        	WGIR        
+ 	DAYS        	YEARS       	DAYS        	MONTHS      	YEARS       	BARSA       	SM3/DAY     	SM3/DAY     	SM3/DAY     	SM3/DAY     
+ 	            	            	            	            	            	            	            	SW1h        	SW2h        	SW3h        
+ 	            	            	            	            	            	            	            	            	            	            
+	 26/Dec/2022	 7.983687  	  26.00000  	  12.00000  	  2022.000  	  65.29375  	         0  	  1.56E-10  	         0  	         0  	  
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	WGIR        	WGIR        	WGIR        	WGIR        	WGIR        	WGIR        	WGIR        	WGIR        	WBHP        
+ 	DAYS        	SM3/DAY     	SM3/DAY     	SM3/DAY     	SM3/DAY     	SM3/DAY     	SM3/DAY     	SM3/DAY     	SM3/DAY     	BARSA       
+ 	            	SW4h        	SW5h        	SW6h        	SW7h        	SW8h        	SW9h        	SW10h       	SW11h       	SW1h        
+ 	            	            	            	            	            	            	            	            	            	            
+	 26/Dec/2022	 5.31E-10  	  1.17E-10  	  7.82E-10  	  5.81E-10  	         0  	  5.89E-10  	  7.47E-10  	  6.55E-10  	  67.16722  	  
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	WBHP        	WBHP        	WBHP        	WBHP        	WBHP        	WBHP        	WBHP        	WBHP        	WBHP        
+ 	DAYS        	BARSA       	BARSA       	BARSA       	BARSA       	BARSA       	BARSA       	BARSA       	BARSA       	BARSA       
+ 	            	SW2h        	SW3h        	SW4h        	SW5h        	SW6h        	SW7h        	SW8h        	SW9h        	SW10h       
+ 	            	            	            	            	            	            	            	            	            	            
+	 26/Dec/2022	 67.03752  	  66.85773  	  66.66077  	  66.34105  	  65.90910  	  65.13767  	  64.17505  	  63.53836  	  63.20261  	  
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	WBHP        	WGDN        	WGDN        	WGDN        	WGDN        	WGDN        	WGDN        	WGDN        	WGDN        
+ 	DAYS        	BARSA       	KG/M3       	KG/M3       	KG/M3       	KG/M3       	KG/M3       	KG/M3       	KG/M3       	KG/M3       
+ 	            	SW11h       	SW1h        	SW2h        	SW3h        	SW4h        	SW5h        	SW6h        	SW7h        	SW8h        
+ 	            	            	            	            	            	            	            	            	            	            
+	 26/Dec/2022	 63.39538  	  1.222849  	  1.222849  	  1.222849  	  1.222849  	  1.222849  	  1.222849  	  1.222849  	  1.222849  	  
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	WGDN        	WGDN        	WGDN        	WWPR        	WWPR        	WWPR        	WWPR        	WWPR        	WWPR        
+ 	DAYS        	KG/M3       	KG/M3       	KG/M3       	SM3/DAY     	SM3/DAY     	SM3/DAY     	SM3/DAY     	SM3/DAY     	SM3/DAY     
+ 	            	SW9h        	SW10h       	SW11h       	SW1h        	SW2h        	SW3h        	SW4h        	SW5h        	SW6h        
+ 	            	            	            	            	            	            	            	            	            	            
+	 26/Dec/2022	 1.222849  	  1.222849  	  1.222849  	         0  	         0  	  9.82E-16  	         0  	         0  	         0  	  
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	WWPR        	WWPR        	WWPR        	WWPR        	WWPR        	WGPR        	WGPR        	WGPR        	WGPR        
+ 	DAYS        	SM3/DAY     	SM3/DAY     	SM3/DAY     	SM3/DAY     	SM3/DAY     	SM3/DAY     	SM3/DAY     	SM3/DAY     	SM3/DAY     
+ 	            	SW7h        	SW8h        	SW9h        	SW10h       	SW11h       	SW1h        	SW2h        	SW3h        	SW4h        
+ 	            	            	            	            	            	            	            	            	            	            
+	 26/Dec/2022	        0  	         0  	         0  	         0  	         0  	         0  	  8.35E-10  	  1.22E-09  	         0  	  
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	WGPR        	WGPR        	WGPR        	WGPR        	WGPR        	WGPR        	WGPR        	WYMF_1      	WYMF_2      
+ 	DAYS        	SM3/DAY     	SM3/DAY     	SM3/DAY     	SM3/DAY     	SM3/DAY     	SM3/DAY     	SM3/DAY     	            	            
+ 	            	SW5h        	SW6h        	SW7h        	SW8h        	SW9h        	SW10h       	SW11h       	SW1h        	SW1h        
+ 	            	            	            	            	            	            	            	            	            	            
+	 26/Dec/2022	        0  	         0  	         0  	  2.22E-10  	         0  	         0  	         0  	         0  	         0  	  
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	WYMF_3      	WYMF_4      	WYMF_1      	WYMF_2      	WYMF_3      	WYMF_4      	WYMF_1      	WYMF_2      	WYMF_3      
+ 	DAYS        	            	            	            	            	            	            	            	            	            
+ 	            	SW1h        	SW1h        	SW2h        	SW2h        	SW2h        	SW2h        	SW3h        	SW3h        	SW3h        
+ 	            	            	            	            	            	            	            	            	            	            
+	 26/Dec/2022	        0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	  
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	WYMF_4      	WYMF_1      	WYMF_2      	WYMF_3      	WYMF_4      	WYMF_1      	WYMF_2      	WYMF_3      	WYMF_4      
+ 	DAYS        	            	            	            	            	            	            	            	            	            
+ 	            	SW3h        	SW4h        	SW4h        	SW4h        	SW4h        	SW5h        	SW5h        	SW5h        	SW5h        
+ 	            	            	            	            	            	            	            	            	            	            
+	 26/Dec/2022	        0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	  
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	WYMF_1      	WYMF_2      	WYMF_3      	WYMF_4      	WYMF_1      	WYMF_2      	WYMF_3      	WYMF_4      	WYMF_1      
+ 	DAYS        	            	            	            	            	            	            	            	            	            
+ 	            	SW6h        	SW6h        	SW6h        	SW6h        	SW7h        	SW7h        	SW7h        	SW7h        	SW8h        
+ 	            	            	            	            	            	            	            	            	            	            
+	 26/Dec/2022	        0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	  
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	WYMF_2      	WYMF_3      	WYMF_4      	WYMF_1      	WYMF_2      	WYMF_3      	WYMF_4      	WYMF_1      	WYMF_2      
+ 	DAYS        	            	            	            	            	            	            	            	            	            
+ 	            	SW8h        	SW8h        	SW8h        	SW9h        	SW9h        	SW9h        	SW9h        	SW10h       	SW10h       
+ 	            	            	            	            	            	            	            	            	            	            
+	 26/Dec/2022	        0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	  
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	WYMF_3      	WYMF_4      	WYMF_1      	WYMF_2      	WYMF_3      	WYMF_4      	WXMF_1      	WXMF_2      	WXMF_3      
+ 	DAYS        	            	            	            	            	            	            	            	            	            
+ 	            	SW10h       	SW10h       	SW11h       	SW11h       	SW11h       	SW11h       	SW1h        	SW1h        	SW1h        
+ 	            	            	            	            	            	            	            	            	            	            
+	 26/Dec/2022	        0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	  
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	WXMF_4      	WXMF_1      	WXMF_2      	WXMF_3      	WXMF_4      	WXMF_1      	WXMF_2      	WXMF_3      	WXMF_4      
+ 	DAYS        	            	            	            	            	            	            	            	            	            
+ 	            	SW1h        	SW2h        	SW2h        	SW2h        	SW2h        	SW3h        	SW3h        	SW3h        	SW3h        
+ 	            	            	            	            	            	            	            	            	            	            
+	 26/Dec/2022	        0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	  
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	WXMF_1      	WXMF_2      	WXMF_3      	WXMF_4      	WXMF_1      	WXMF_2      	WXMF_3      	WXMF_4      	WXMF_1      
+ 	DAYS        	            	            	            	            	            	            	            	            	            
+ 	            	SW4h        	SW4h        	SW4h        	SW4h        	SW5h        	SW5h        	SW5h        	SW5h        	SW6h        
+ 	            	            	            	            	            	            	            	            	            	            
+	 26/Dec/2022	        0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	  
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	WXMF_2      	WXMF_3      	WXMF_4      	WXMF_1      	WXMF_2      	WXMF_3      	WXMF_4      	WXMF_1      	WXMF_2      
+ 	DAYS        	            	            	            	            	            	            	            	            	            
+ 	            	SW6h        	SW6h        	SW6h        	SW7h        	SW7h        	SW7h        	SW7h        	SW8h        	SW8h        
+ 	            	            	            	            	            	            	            	            	            	            
+	 26/Dec/2022	        0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	  
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	WXMF_3      	WXMF_4      	WXMF_1      	WXMF_2      	WXMF_3      	WXMF_4      	WXMF_1      	WXMF_2      	WXMF_3      
+ 	DAYS        	            	            	            	            	            	            	            	            	            
+ 	            	SW8h        	SW8h        	SW9h        	SW9h        	SW9h        	SW9h        	SW10h       	SW10h       	SW10h       
+ 	            	            	            	            	            	            	            	            	            	            
+	 26/Dec/2022	        0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	  
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	WXMF_4      	WXMF_1      	WXMF_2      	WXMF_3      	WXMF_4      	WZMF_1      	WZMF_2      	WZMF_3      	WZMF_4      
+ 	DAYS        	            	            	            	            	            	            	            	            	            
+ 	            	SW10h       	SW11h       	SW11h       	SW11h       	SW11h       	SW1h        	SW1h        	SW1h        	SW1h        
+ 	            	            	            	            	            	            	            	            	            	            
+	 26/Dec/2022	        0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	  
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	WZMF_1      	WZMF_2      	WZMF_3      	WZMF_4      	WZMF_1      	WZMF_2      	WZMF_3      	WZMF_4      	WZMF_1      
+ 	DAYS        	            	            	            	            	            	            	            	            	            
+ 	            	SW2h        	SW2h        	SW2h        	SW2h        	SW3h        	SW3h        	SW3h        	SW3h        	SW4h        
+ 	            	            	            	            	            	            	            	            	            	            
+	 26/Dec/2022	        0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	  
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	WZMF_2      	WZMF_3      	WZMF_4      	WZMF_1      	WZMF_2      	WZMF_3      	WZMF_4      	WZMF_1      	WZMF_2      
+ 	DAYS        	            	            	            	            	            	            	            	            	            
+ 	            	SW4h        	SW4h        	SW4h        	SW5h        	SW5h        	SW5h        	SW5h        	SW6h        	SW6h        
+ 	            	            	            	            	            	            	            	            	            	            
+	 26/Dec/2022	        0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	  
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	WZMF_3      	WZMF_4      	WZMF_1      	WZMF_2      	WZMF_3      	WZMF_4      	WZMF_1      	WZMF_2      	WZMF_3      
+ 	DAYS        	            	            	            	            	            	            	            	            	            
+ 	            	SW6h        	SW6h        	SW7h        	SW7h        	SW7h        	SW7h        	SW8h        	SW8h        	SW8h        
+ 	            	            	            	            	            	            	            	            	            	            
+	 26/Dec/2022	        0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	  
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	WZMF_4      	WZMF_1      	WZMF_2      	WZMF_3      	WZMF_4      	WZMF_1      	WZMF_2      	WZMF_3      	WZMF_4      
+ 	DAYS        	            	            	            	            	            	            	            	            	            
+ 	            	SW8h        	SW9h        	SW9h        	SW9h        	SW9h        	SW10h       	SW10h       	SW10h       	SW10h       
+ 	            	            	            	            	            	            	            	            	            	            
+	 26/Dec/2022	        0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	         0  	  
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	WZMF_1      	WZMF_2      	WZMF_3      	WZMF_4      	RGIP        	RGIP        	RGIP        	RGIP        	RGIP        
+ 	DAYS        	            	            	            	            	SM3         	SM3         	SM3         	SM3         	SM3         
+ 	            	SW11h       	SW11h       	SW11h       	SW11h       	            	            	            	            	            
+ 	            	            	            	            	            	1           	2           	3           	4           	5           
+	 26/Dec/2022	        0  	         0  	         0  	         0  	         0  	         0  	         0  	  0.032601  	  1057492.  	  
+
+	SUMMARY OF RUN IF_TESTCASE_CAES_SHUT                                                                                                                                                                                                                                                                                                                                                                                                                                                     	
+ 	DATE        	RGIP        	RGIP        	RGIP        	RGIP                                                                         
+ 	DAYS        	SM3         	SM3         	SM3         	SM3                                                                          
+ 	            	            	            	            	                                                                             
+ 	            	6           	7           	8           	9                                                                            
+	 26/Dec/2022	 4.34E+08  	  457215.6  	  76670.56  	         0  	                                                                   

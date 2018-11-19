@@ -15,6 +15,7 @@ structure:
    5) return one pressure and the storage flowrate to tespy
 
 """
+
 class ctrl_sto:
     
     def __init__(self):
@@ -26,7 +27,11 @@ class ctrl_sto:
         self.well_names = []
         self.well_lower_BHP = []
         self.well_upper_BHP = []
+        self.keep_ecl_logs = False
     
+    def set_ecl_log_flag(self, a_flag):
+        self.keep_ecl_logs = a_flag
+
     def set_path(self, a_path):
         self.path = a_path
     
@@ -62,9 +67,9 @@ def AssembleDefaultSimulationData(path_to_ctrl):
     DEBUG VALUES FROM HERE ONWARDS
     '''
     # these are variables which should be provided in a control structure (they do not change during sim)
-    well_names = ['SW1h', 'SW2h', 'SW3h', 'SW4h', 'SW5h', 'SW6h', 'SW7h', 'SW8h', 'SW9h', 'SW10h', 'SW11h']
-    well_l_bhp = [47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47]
-    well_u_bhp = [74.7381, 72.8791, 71.0729, 69.8714, 69.2746, 68.8359, 67.0755, 65.0883, 64.0934, 63.5965, 66.1561]
+    well_names = ['Well_c', 'Well_n', 'Well_ne', 'Well_e', 'Well_se', 'Well_s', 'Well_sw', 'Well_w', 'Well_nw']
+    well_l_bhp = [35, 35, 35, 35, 35, 35, 35, 35, 35]
+    well_u_bhp = [120, 120, 120, 120, 120, 120, 120, 120, 120]
 
     
     for entry in well_names:
@@ -74,10 +79,12 @@ def AssembleDefaultSimulationData(path_to_ctrl):
     for entry in well_u_bhp:
        sim_defaults.add_well_upper_BHP_val(entry)
 
-    sim_defaults.set_path(r'C:\Users\wtp\work\programming\IF_PPlant_Storage\testdata')
+    sim_defaults.set_path(r'E:\Programming\IF_PPlant_Storage\testdata')
     sim_defaults.set_simulator('e300')
-    sim_defaults.set_simulation_title('IF_TESTCASE_CAES')
-    sim_defaults.set_restart_id(183)
+    sim_defaults.set_simulation_title('SYNTH_ANTI_CAES_IF')
+    sim_defaults.set_restart_id(0)
+    sim_defaults.set_simulator_path(r'C:\ecl\2017.2\bin\pc_x86_64')
+    sim_defaults.set_ecl_log_flag(True)
 
     '''
     END OF DEBUG VALUES
@@ -86,26 +93,14 @@ def AssembleDefaultSimulationData(path_to_ctrl):
     return sim_defaults
 
 
-def entry_node(target_flow, tstep, tstepsize):
+def entry_node(target_flow, tstep, tstepsize, op_mode):
 
     #this is the entry point for the geostorage coupling
-    if tstep == 1:
-        sim_defaults = AssembleDefaultSimulationData('')
-
-    '''
-    DEBUG VALUES FROM HERE ONWARDS 
-    '''
-    current_mode = 'discharging'
-    tstep = 19
-    target_flowrate = -200000
-    tstepsize = 3600
-
-    '''
-    END OF DEBUG VALUES
-    '''
+    #if tstep == 1:
+    sim_defaults = AssembleDefaultSimulationData('')
 
     if(sim_defaults.simulator == 'ECLIPSE' or sim_defaults.simulator == 'e300'):
-        flowrate, pressure = RunECLIPSE(sim_defaults, target_flowrate, tstepsize, tstep, current_mode)
+        flowrate, pressure = RunECLIPSE(sim_defaults, target_flow, tstepsize, tstep, op_mode)
     elif sim_defaults.simulator == 'proxy':
         pass
         #implement later
@@ -116,14 +111,31 @@ def entry_node(target_flow, tstep, tstepsize):
 
 
 def RunECLIPSE(ctrl, target_flowrate, tstepsize, tstep, current_mode):
+
     #wrapper for the eclipse coupling
+    print('######################################################################')
+    print('Running storage simulation for timestep:\t', '%.0f'%tstep)
+    print('timestep size:\t\t\t\t\t', tstepsize, '\t\ts')
+    print('target storage flowrate:\t\t\t', '%.6f'%target_flowrate, '\tsm3/s')
+    print('operational mode:\t\t\t\t', current_mode)
+    print('----------------------------------------------------------------------')
+    
+    #('%.2f'%a) 
+    
     # assembling current ecl data file
-    reworkECLData(ctrl, tstepsize, target_flowrate, current_mode)
+    reworkECLData(ctrl, tstep, tstepsize, target_flowrate, current_mode)
+    #print('tstep: ', tstep, ' stepsize: ', tstepsize)
+    #print('current operational mode: ', current_mode, ' target flowrate: ', target_flowrate)
     # executing eclipse
-    ExecuteECLIPSE(ctrl)
+    ExecuteECLIPSE(ctrl, tstep)
     # reading results
     ecl_results = GetECLResults(ctrl, tstep, current_mode)
     # returns achieved flowrate, pressure, ?
+
+    print('Timestep ', tstep, ' completed.')
+    print('Pressure actual:\t', '%.6f'%ecl_results[0], '\tbars')
+    print('Flowrate actual:\t', '%.6f'%ecl_results[1], '\tsm3/s')
+    print('######################################################################')
     return (ecl_results[1], ecl_results[0])
 
 
@@ -196,7 +208,7 @@ def contractDataArray(input):
         a_row = a_row.replace('\t', ';')
         a_row = a_row.split(';')
        # if not a_row[0]: 
-        del a_row[0]  #first entry is always blank in ecl
+        del a_row[0]  #first entry is always blank in ecl rsm output
         a_new_row = []
         for j in a_row:
             temp_str = j.strip()
@@ -251,22 +263,37 @@ def getStringCount(input, keyword):
 
 
 
-def reworkECLData(control, timestep, flowrate, op_mode):
-    path_loc = control.path
-    restart_id_loc = control.restart_id
-    simulation_title_loc = control.simulation_title
-    
+def reworkECLData(control, timestep, timestepsize, flowrate, op_mode):
+        
     # open and read eclipse data file
-    ecl_data_file = getFile(path_loc + '\\' + simulation_title_loc + '.DATA')
+    ecl_data_file = getFile(control.path + '\\' + control.simulation_title + '.DATA')
     
     #rearrange the entries in the saved list
     #first search for the restart keyword
-    restart_pos = searchSection(ecl_data_file, "RESTART")
-    if restart_pos > 0:
-        #assemble new string for restart section
-        ecl_data_file[restart_pos + 1] =  "\'" + simulation_title_loc + "\' \t" 
-        ecl_data_file[restart_pos + 1] += str(restart_id_loc + timestep) + " /"
-
+    
+    if timestep == 2:
+        #look for EQUIL and RESTART keyword
+        equil_pos = searchSection(ecl_data_file, 'EQUIL')
+        if(equil_pos > 0):
+            #delete equil and replace with restart
+            #assemble new string for restart section
+            ecl_data_file[equil_pos] = 'RESTART\n'
+            ecl_data_file[equil_pos + 1] =  '\'' + control.simulation_title + '\' \t' 
+            ecl_data_file[equil_pos + 1] += str(int(control.restart_id) + timestep - 1)  + ' /\n'
+        else:
+            restart_pos = searchSection(ecl_data_file, "RESTART")
+            if restart_pos > 0:
+                #assemble new string for restart section
+                ecl_data_file[restart_pos + 1] =  '\'' + control.simulation_title + '\' \t' 
+                ecl_data_file[restart_pos + 1] += str(int(control.restart_id) + timestep - 1)  + ' /\n'
+    if timestep > 2:
+        restart_pos = searchSection(ecl_data_file, "RESTART")
+        if restart_pos > 0:
+            #assemble new string for restart section
+            ecl_data_file[restart_pos + 1] =  '\'' + control.simulation_title + '\' \t' 
+            ecl_data_file[restart_pos + 1] += str(int(control.restart_id) + timestep - 1)  + ' /\n'
+        
+        
     #now rearrange the well schedule section
     schedule_pos = searchSection(ecl_data_file, "WCONINJE")
     if schedule_pos == 0:
@@ -278,7 +305,8 @@ def reworkECLData(control, timestep, flowrate, op_mode):
         # append new well schedule
         # first calculate rate applied for each well
         well_count = len(control.well_names)
-        well_target = flowrate / well_count
+        well_target = abs(flowrate / well_count)
+        well_target_days = well_target * 60.0 * 60.0 *24.0
 
         #now construct new well schedule section
         ecl_data_file.append('\n')
@@ -288,7 +316,7 @@ def reworkECLData(control, timestep, flowrate, op_mode):
             for idx in range(len(control.well_names)):
                 line = '\'' + control.well_names[idx] + '\''
                 line += '\t\'GAS\'\t\'OPEN\'\t\'RATE\'\t'
-                line += str(well_target) + '\t'
+                line += str(well_target_days) + '\t'
                 line += '1*\t' + str(control.well_upper_BHP[idx]) + '/\n'
                 ecl_data_file.append(line)
 
@@ -297,7 +325,7 @@ def reworkECLData(control, timestep, flowrate, op_mode):
             for idx in range(len(control.well_names)):
                 line = '\'' + control.well_names[idx] + '\''
                 line += '\t\'OPEN\'\t\'GRAT\'\t1*\t1*\t'
-                line += str(well_target) + '\t'
+                line += str(well_target_days) + '\t'
                 line += '1*\t1*\t' + str(control.well_lower_BHP[idx]) + '/\n'
                 ecl_data_file.append(line)
         elif op_mode == 'shut-in':
@@ -313,28 +341,43 @@ def reworkECLData(control, timestep, flowrate, op_mode):
 
         ecl_data_file.append('/')
         #finish schedule
-        file_finish = ['\n', '\n', 'TSTEP\n', '1*' + str(timestep) + '\n', '/\n', '\n', '\n', 'END\n' ]
+        timestepsize_days = timestepsize / 60.0 / 60.0 / 24.0
+        file_finish = ['\n', '\n', 'TSTEP\n', '1*' + str(timestepsize_days) + '\n', '/\n', '\n', '\n', 'END\n' ]
         ecl_data_file += file_finish
 
         #save to new file
-        temp_path = path_loc + '\\' + simulation_title_loc + '_' + str(timestep) + '.DATA'
+        temp_path = control.path + '\\' + control.simulation_title + '.DATA'
         writeFile(temp_path, ecl_data_file)
 
 
 
-def ExecuteECLIPSE(control):
-    simulator_loc = control.simulator
-    print(' Nothin implemented yet in ExecuteEclipse')
+def ExecuteECLIPSE(control, tstep):
+
+    #import subprocess
+    import os
+
+    if os.name == 'nt':
+        simulation_path = control.path + '\\' + control.simulation_title + '.DATA'
+        if control.keep_ecl_logs == True:
+            log_file_path = control.path + '\\' + 'log_' + control.simulation_title + '_' + str(tstep) + '.txt'
+        else:
+            log_file_path = 'NUL'
+        temp = 'eclrun ' + control.simulator + ' ' + simulation_path + ' >' + log_file_path
+        os.system(temp)
+    #elif os.name == 'posix':
+        #log_output_loc += ' &'
+        #rc = subprocess.call(['eclrun', simulator_loc, simulation_title_loc, '>', log_output_loc])
+    
+    #print(rc)
+
 
 
 def GetECLResults(control, timestep, current_op_mode):
     #function returns list with two entries:
     # data[pressure_actual, flowrate_actual]
-    path_loc = control.path
-    simulation_title_loc = control.simulation_title
     
     #first read the results file
-    filename = path_loc + '\\' + simulation_title_loc + '_' + str(timestep) + '.RSM'  
+    filename = control.path + '\\' + control.simulation_title + '.RSM'  
     results = getFile(filename)
     #sort the rsm data to a more uniform dataset
     reorderd_rsm_data = rearrangeRSMDataArray(results)
@@ -348,7 +391,9 @@ def GetECLResults(control, timestep, current_op_mode):
     
     #data structures to save the flowrates, pressures and names of all individual wells
     well_pressures = []
+    well_flowrates_days = []
     well_flowrates = []
+    well_mass_flowrates = [] #not in use yet
     well_names = []
     well_names_loc = []
     flowrate_actual = 0.0
@@ -369,7 +414,7 @@ def GetECLResults(control, timestep, current_op_mode):
         flow_keyword = 'WGPR'
         flow_positions = getStringPositions(well_results[0], flow_keyword)
         for i in flow_positions:
-            well_flowrates.append(float(well_results[-1][i]) * -1.0) #ecl flowrates are always positive
+            well_flowrates_days.append(float(well_results[-1][i]) * -1.0) #ecl flowrates are always positive
             well_names_loc.append(well_results[2][i])
                
     elif current_op_mode == 'charging':
@@ -377,7 +422,7 @@ def GetECLResults(control, timestep, current_op_mode):
         flow_keyword = 'WGIR'
         flow_positions = getStringPositions(well_results[0], flow_keyword)
         for i in flow_positions:
-            well_flowrates.append(float(well_results[-1][i]))
+            well_flowrates_days.append(float(well_results[-1][i]))
             well_names_loc.append(well_results[2][i])
 
     elif current_op_mode == 'shut-in':
@@ -399,12 +444,16 @@ def GetECLResults(control, timestep, current_op_mode):
                     if well_names_loc[j] == target_str:
                         correct_idx.append(j)
         #sort entries in well_flowrates based on correct_idx
-        well_flowrates_temp = well_flowrates
+        well_flowrates_temp = well_flowrates_days
         for i in correct_idx:
-            well_flowrates[i] = well_flowrates_temp[i]
+            well_flowrates_days[i] = well_flowrates_temp[i]
     
         #calculate total flowrate 
         #maybe add timestep dependence (only needed if more than one per call)?
+        #change unit of flowrates to sm3/s from sm3/d
+        for i in range(len(well_flowrates_days)):
+            well_flowrates.append(well_flowrates_days[i] / 60.0 / 60.0 / 24.0)
+
         flowrate_actual = sum(well_flowrates)
 
         #calculate average pressure
@@ -415,7 +464,11 @@ def GetECLResults(control, timestep, current_op_mode):
     else:
         pressure_actual = sum(well_pressures) / float(len(well_pressures))
 
+    # to-do: return mass flow rate instead of volumetric flow data
     return [pressure_actual, flowrate_actual]
 
-
-
+'''debug'''
+data = [0.0, 0.0]
+data = entry_node(1.15741, 1, 3600, 'charging')
+data = entry_node(0.0, 2, 3600, 'shut-in')
+data = entry_node(-1.15741, 3, 3600, 'discharging')

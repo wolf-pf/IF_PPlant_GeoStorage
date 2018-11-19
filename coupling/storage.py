@@ -99,7 +99,7 @@ class tespy:
 
     def __init__(self, tespy_charge, tespy_discharge):
 
-        do_something_else
+        
 
 
 def reverse_2d(params, y):

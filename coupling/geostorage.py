@@ -63,6 +63,15 @@ def AssembleDefaultSimulationData(path_to_ctrl):
 
     sim_defaults = ctrl_sto()
 
+    # open and read control file
+    sto_ctrl_file = getFile(path_to_ctrl)
+
+    sto_ctrl_file_new = []
+    for i in sto_ctrl_file:
+        sto_ctrl_file_new.append(i.strip())
+
+    print(sto_ctrl_file_new)
+
     '''
     DEBUG VALUES FROM HERE ONWARDS
     '''
@@ -93,19 +102,17 @@ def AssembleDefaultSimulationData(path_to_ctrl):
     return sim_defaults
 
 
-def entry_node(target_flow, tstep, tstepsize, op_mode):
+def entry_node(target_flow, tstep, tstepsize, op_mode, storage_ctrl):
 
     #this is the entry point for the geostorage coupling
-    #if tstep == 1:
-    sim_defaults = AssembleDefaultSimulationData('')
 
-    if(sim_defaults.simulator == 'ECLIPSE' or sim_defaults.simulator == 'e300'):
-        flowrate, pressure = RunECLIPSE(sim_defaults, target_flow, tstepsize, tstep, op_mode)
-    elif sim_defaults.simulator == 'proxy':
+    if(storage_ctrl.simulator == 'ECLIPSE' or storage_ctrl.simulator == 'e300'):
+        flowrate, pressure = RunECLIPSE(storage_ctrl, target_flow, tstepsize, tstep, op_mode)
+    elif storage_ctrl.simulator == 'proxy':
         pass
         #implement later
     else:
-        print('ERROR: simulator flag not understood. Is: ', sim_defaults.simulator)
+        print('ERROR: simulator flag not understood. Is: ', storage_ctrl.simulator)
     
     return (flowrate, pressure)
 
@@ -468,7 +475,9 @@ def GetECLResults(control, timestep, current_op_mode):
     return [pressure_actual, flowrate_actual]
 
 '''debug'''
+#if tstep == 1:
+sim_defaults = AssembleDefaultSimulationData(r'E:\Programming\IF_PPlant_Storage\testdata\testcase.storage_ctrl')
 data = [0.0, 0.0]
-data = entry_node(1.15741, 1, 3600, 'charging')
-data = entry_node(0.0, 2, 3600, 'shut-in')
-data = entry_node(-1.15741, 3, 3600, 'discharging')
+#data = entry_node(1.15741, 1, 3600, 'charging', sim_defaults)
+#data = entry_node(0.0, 2, 3600, 'shut-in', sim_defaults)
+#data = entry_node(-1.15741, 3, 3600, 'discharging', sim_defaults)

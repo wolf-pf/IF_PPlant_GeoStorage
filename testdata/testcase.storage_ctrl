@@ -1,0 +1,36 @@
+<storage_simulator_data>
+	<identifier>
+		e300
+	</identifier>
+	<simulator_path>
+		C:\ecl\2017.2\bin\pc_x86_64
+	</simulator_path>
+	<simulation_title>
+		SYNTH_ANTI_CAES_IF
+	</simulation_title>
+	<simulation_path>
+		E:\Programming\IF_PPlant_Storage\testdata
+	</simulation_path>
+	<restart_id>
+		0
+	</restart_id>
+	<ecl_log_file>
+		True
+	</ecl_log_file>
+</storage_simulator_data>
+<well_data>
+	<count>
+		9
+	</count>
+	<data>
+		Well_c, 35, 120
+		Well_n, 35, 120
+		Well_ne, 35, 120
+		Well_e, 35, 120
+		Well_se, 35, 120
+		Well_s, 35, 120
+		Well_sw, 35, 120
+		Well_w, 35, 120
+		Well_nw, 35, 120
+	</data>
+</well_data>

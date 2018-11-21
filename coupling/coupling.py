@@ -30,17 +30,18 @@ def __main__(md):
     # create instances for power plant and storage
     power_plant = pp.model(md.pp)
     #storage = sto.model(md.sto)
+    geo_storage = geo_sto()
     
     time_series = read_series(md.ts_path)
 
     #get input control file for storage simulation
     '''debug values from here onwards'''
     #if tstep == 1:
-    geo_sto.InitializeStorageDefaults(r'.\testdata\testcase.storage_ctrl')
+    geo_storage.InitializeStorageDefaults(r'.\testdata\testcase.storage_ctrl')
     #data = [0.0, 0.0]
-    #data = entry_node(1.15741, 1, 3600, 'charging', sim_defaults)
-    #data = entry_node(0.0, 2, 3600, 'shut-in', sim_defaults)
-    #data = entry_node(-1.15741, 3, 3600, 'discharging', sim_defaults)
+    #data = CallStorageSimulation(1.15741, 1, 3600, 'charging')
+    #data = CallStorageSimulation(0.0, 2, 3600, 'shut-in')
+    #data = CallStorageSimulation(-1.15741, 3, 3600, 'discharging')
     '''end of debug values'''
 
     for T in time_series.index:

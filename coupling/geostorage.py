@@ -7,6 +7,8 @@ __author__ = "wtp"
 
 """
 
+import utilities as util
+
 class geo_sto:
     
     '''
@@ -61,65 +63,33 @@ class geo_sto:
         :returns: no return value
         '''
 
-        # open and read control file
-        sto_ctrl_list = getFile(path_to_ctrl)
-        
-        for i in range(len(sto_ctrl_list)):
-            sto_ctrl_list[i] = sto_ctrl_list[i].strip()
-        #print(sto_ctrl_list)
-        sto_ctrl_list = list(filter(None, sto_ctrl_list))
+        # read and clean control file
+        sto_ctrl_list = util.cleanControlFileList(util.getFile(path_to_ctrl))       
+
     
         #search for simulation data
         #get beginning and end 
-        if searchSection(sto_ctrl_list, '<storage_simulator_data>') >= 0:
-            pos_ident = searchSection(sto_ctrl_list, '<identifier>')
-            end_pos_ident = searchSection(sto_ctrl_list, '</identifier>')
-            if pos_ident < end_pos_ident and pos_ident >= 0:
-                self.set_simulator(sto_ctrl_list[pos_ident + 1])
-    
-            pos_simulator_path = searchSection(sto_ctrl_list, '<simulator_path>')
-            end_pos_simulator_path = searchSection(sto_ctrl_list, '</simulator_path>')
-            if pos_simulator_path < end_pos_simulator_path and pos_simulator_path >= 0:
-                self.set_simulator_path(sto_ctrl_list[pos_simulator_path + 1])
-            
-            pos_sim_title = searchSection(sto_ctrl_list, '<simulation_title>')
-            end_pos_sim_title = searchSection(sto_ctrl_list, '</simulation_title>')
-            if pos_sim_title < end_pos_sim_title and pos_sim_title >= 0:
-                self.set_simulator_path(sto_ctrl_list[pos_sim_title + 1])
-    
-            pos_path = searchSection(sto_ctrl_list, '<simulation_path>')
-            end_pos_path = searchSection(sto_ctrl_list, '</simulation_path>')
-            if pos_path < end_pos_path and pos_path >= 0:
-                self.set_path(sto_ctrl_list[pos_path + 1])
-    
-            pos_res_id = searchSection(sto_ctrl_list, '<restart_id>')
-            end_pos_res_id = searchSection(sto_ctrl_list, '</restart_id>')
-            if pos_res_id < end_pos_res_id and pos_res_id >= 0:
-                self.set_restart_id(sto_ctrl_list[pos_res_id + 1])
-            
-            pos_ecl_log_flag = searchSection(sto_ctrl_list, '<ecl_log_file>')
-            end_pos_ecl_log_flag = searchSection(sto_ctrl_list, '</ecl_log_file>')
-    
-            if pos_ecl_log_flag < end_pos_ecl_log_flag and pos_ecl_log_flag >= 0:
-                flag = sto_ctrl_list[pos_ecl_log_flag + 1]
-                if bool(flag) == True or bool(flag) == False:
-                    self.set_ecl_log_flag(bool(flag))
-                else: 
-                    print('Input for ecl log file not understood. Setting flag to True')
-                    self.set_ecl_log_flag(True)
-        
-        if searchSection(sto_ctrl_list, '<well_data>') >= 0:
-            pos_well_count = searchSection(sto_ctrl_list, '<count>')
-            end_pos_well_count = searchSection(sto_ctrl_list, '</count>')
-
-            if pos_well_count < end_pos_well_count and pos_well_count >= 0:
-                well_count_loc = sto_ctrl_list[pos_well_count + 1]
-
-                pos_well_data = searchSection(sto_ctrl_list, '<data>')
-                end_pos_well_data = searchSection(sto_ctrl_list, '</data>')
-                if pos_well_data < end_pos_well_data and pos_well_data >= 0:
-                    for i in range(int(well_count_loc)):
-                        temp_list = (sto_ctrl_list[pos_well_data + 1 + i]).split()
+        if util.getValuefromControlFileList(sto_ctrl_list, 'storage_simulator_data') is not 'KEY_NOT_FOUND':
+            self.set_simulator(util.getValuefromControlFileList(sto_ctrl_list, 'identifier'))
+            self.set_simulator_path(util.getValuefromControlFileList(sto_ctrl_list, 'simulator_path'))
+            self.set_simulation_title(util.getValuefromControlFileList(sto_ctrl_list, 'simulation_title'))
+            self.set_path(util.getValuefromControlFileList(sto_ctrl_list, 'simulation_path'))
+            self.set_restart_id(util.getValuefromControlFileList(sto_ctrl_list, 'restart_id'))
+            flag = util.getValuefromControlFileList(sto_ctrl_list, 'ecl_log_file')
+            if bool(flag) == True or bool(flag) == False:
+                self.set_ecl_log_flag(bool(flag))
+            else: 
+                print('Input for ecl log file not understood. Setting flag to True')
+                self.set_ecl_log_flag(True)
+        if util.getValuefromControlFileList(sto_ctrl_list, 'well_data') is not 'KEY_NOT_FOUND':
+            well_count_loc = util.getValuefromControlFileList(sto_ctrl_list, 'count')
+            if well_count_loc is not 'KEY_NOT_FOUND':
+                well_count_loc = int(well_count_loc)
+                
+                if util.getValuefromControlFileList(sto_ctrl_list, 'data') is not 'KEY_NOT_FOUND':
+                    start_idx = util.getIdxfromControlFileList(sto_ctrl_list, 'data')
+                    for i in range(well_count_loc):
+                        temp_list = (sto_ctrl_list[start_idx + 1 + i]).split()
                         self.add_well_name(temp_list[0])
                         self.add_well_lower_BHP_val(float(temp_list[1]))
                         self.add_well_upper_BHP_val(float(temp_list[2]))
@@ -207,8 +177,8 @@ class geo_sto:
         :returns: returns a clearer version of the input list (type: list of strings)
         '''
         # function to re-order / get rid off line breaks etc. in input
-        break_count = getStringCount(rsm_list, 'SUMMARY OF RUN')
-        break_positions = getStringPositions(rsm_list, 'SUMMARY OF RUN')
+        break_count = util.getStringCount(rsm_list, 'SUMMARY OF RUN')
+        break_positions = util.getStringPositions(rsm_list, 'SUMMARY OF RUN')
         #break_positions = [i for i, s in enumerate(rsm_list) if 'SUMMARY OF RUN' in s]
     
         if break_count > 0:
@@ -255,12 +225,12 @@ class geo_sto:
         :returns: no return value
         '''
         # open and read eclipse data file
-        ecl_data_file = getFile(self.path + '\\' + self.simulation_title + '.DATA')
+        ecl_data_file = util.getFile(self.path + '\\' + self.simulation_title + '.DATA')
         
         #rearrange the entries in the saved list
         if timestep == 2:
             #look for EQUIL and RESTART keyword
-            equil_pos = searchSection(ecl_data_file, 'EQUIL')
+            equil_pos = util.searchSection(ecl_data_file, 'EQUIL')
             if(equil_pos > 0):
                 #delete equil and replace with restart
                 #assemble new string for restart section
@@ -268,22 +238,22 @@ class geo_sto:
                 ecl_data_file[equil_pos + 1] =  '\'' + self.simulation_title + '\' \t' 
                 ecl_data_file[equil_pos + 1] += str(int(self.restart_id) + timestep - 1)  + ' /\n'
             else:
-                restart_pos = searchSection(ecl_data_file, "RESTART")
+                restart_pos = util.searchSection(ecl_data_file, "RESTART")
                 if restart_pos > 0:
                     #assemble new string for restart section
                     ecl_data_file[restart_pos + 1] =  '\'' + self.simulation_title + '\' \t' 
                     ecl_data_file[restart_pos + 1] += str(int(self.restart_id) + timestep - 1)  + ' /\n'
         if timestep > 2:
-            restart_pos = searchSection(ecl_data_file, "RESTART")
+            restart_pos = util.searchSection(ecl_data_file, "RESTART")
             if restart_pos > 0:
                 #assemble new string for restart section
                 ecl_data_file[restart_pos + 1] =  '\'' + self.simulation_title + '\' \t' 
                 ecl_data_file[restart_pos + 1] += str(int(self.restart_id) + timestep - 1)  + ' /\n'
             
         #now rearrange the well schedule section
-        schedule_pos = searchSection(ecl_data_file, "WCONINJE")
+        schedule_pos = util.searchSection(ecl_data_file, "WCONINJE")
         if schedule_pos == 0:
-            schedule_pos = searchSection(ecl_data_file, "WCONPROD")
+            schedule_pos = util.searchSection(ecl_data_file, "WCONPROD")
             
         if schedule_pos > 0:
             # delete the old well schedule
@@ -337,7 +307,7 @@ class geo_sto:
                 temp_path = self.path + '\\' + self.simulation_title + '.DATA'
             else:
                 temp_path = self.path + '\\' + self.simulation_title + '_init.DATA'
-            writeFile(temp_path, ecl_data_file)
+            util.writeFile(temp_path, ecl_data_file)
     
     
     
@@ -390,11 +360,11 @@ class geo_sto:
             filename = self.path + '\\' + self.simulation_title + '.RSM'
         else:
             filename = self.path + '\\' + self.simulation_title + '_init.RSM'
-        results = getFile(filename)
+        results = util.getFile(filename)
         #sort the rsm data to a more uniform dataset
         reorderd_rsm_data = self.rearrangeRSMDataArray(results)
         #eleminate additional whitespaces, duplicate entries, etc.
-        well_results = contractDataArray(reorderd_rsm_data)
+        well_results = util.contractDataArray(reorderd_rsm_data)
     
         # check number of data entries in well_results:
         values = len(well_results) - 4
@@ -413,7 +383,7 @@ class geo_sto:
         
         # get well pressures
         pressure_keyword = 'WBHP'
-        bhp_positions = getStringPositions(well_results[0], pressure_keyword)
+        bhp_positions = util.getStringPositions(well_results[0], pressure_keyword)
     
         for i in bhp_positions:
             well_pressures.append(float(well_results[-1][i]))
@@ -434,14 +404,14 @@ class geo_sto:
         if current_op_mode == 'discharging': #negative flow rates
             #get all positions of WGPR entries in well_results
             flow_keyword = 'WGPR'
-            flow_positions = getStringPositions(well_results[0], flow_keyword)
+            flow_positions = util.getStringPositions(well_results[0], flow_keyword)
             for i in flow_positions:
                 well_flowrates_days.append(float(well_results[-1][i]) * -1.0) #ecl flowrates are always positive
                 well_names_loc.append(well_results[2][i])
                    
         elif current_op_mode == 'charging': #positive flow rates
             flow_keyword = 'WGIR'
-            flow_positions = getStringPositions(well_results[0], flow_keyword)
+            flow_positions = util.getStringPositions(well_results[0], flow_keyword)
             for i in flow_positions:
                 well_flowrates_days.append(float(well_results[-1][i]))
                 well_names_loc.append(well_results[2][i])
@@ -502,126 +472,5 @@ class geo_sto:
         return [0.0, 0.0]
 
 
-def writeFile(path, a_list):
-    '''
-    Short function to write a file based on a list of strings
 
-    :param a_list: the input list
-    :param type: string
-    :returns: no return value
-    '''
-    with open (path, 'w') as f:
-        for entry in a_list:
-            f.write("%s" % entry)
-
-
-
-def getFile(path):
-    '''
-    Short function to read a file and save as a list fo strings
-
-    :param path: the path to the file 
-    :param type: string
-    :returns: a list of strings
-    '''
-    a_list = []
-    with open(path) as f:
-        a_list = list(f)
-    f.closed
-    
-    return a_list
-
-
-def contractDataArray(input):
-    '''
-    Short function to clean and contract a data array
-
-    :param input: the input list to be cleaned
-    :param type: string
-    :returns: a list of strings
-    '''
-    output = []
-    rows = len(input)
-    
-    for i in range(rows):
-        # for each row do remove the stuff and save as clean list
-        a_row = input[i]
-        a_row = a_row.replace('\t', ';')
-        a_row = a_row.split(';')
-       # if not a_row[0]: 
-        del a_row[0]  #first entry is always blank in ecl rsm output
-        a_new_row = []
-        for j in a_row:
-            temp_str = j.strip()
-            if not str(temp_str):
-                temp_str = 'n.a.'
-            a_new_row.append(temp_str)
-        # if itis the last row delete last entry of that row
-        #print('i: ', i , ' total rows: ', rows)
-        if (i + 1) == rows:
-            del a_new_row[-1]
-            
-        output.append(a_new_row)
-    
-    #go through whole list and delete double date entries
-    date_positions = [i for i, s in enumerate(output[0]) if 'DATE' in s]
-    #print('Positions of \'DATE\' in array: ', date_positions)
-    max_count = len(date_positions)
-    for e in reversed(date_positions):
-        if max_count > 1:
-            for i in range(len(output)):
-                del output[i][e]
-        max_count = max_count - 1
-    
-    return output
-
-
-
-def searchSection(data_list, section):
-    '''
-    function to search for a given string in a list of strings
-
-    :param data_list: the input list to be searched
-    :param type: list of strings
-    :param section: the string which is searched for
-    :param type: string
-    :returns: int
-    '''
-    #what if there is a whitespace behind keyword?
-    pos = -1
-    if section in data_list:
-        pos = data_list.index(section)
-    else:
-        section += "\n"
-        if section in data_list:
-            pos = data_list.index(section)
-    return pos
-
-
-
-def getStringPositions(input, keyword):
-    '''
-    function to get all positions of a string in a list
-
-    :param input: the input list to be searched in
-    :param type: list of strings
-    :param keyword: the string to be searched for
-    :param type: string
-    :returns: list of int
-    '''
-    return [i for i, s in enumerate(input) if keyword in s]
-
-
-
-def getStringCount(input, keyword):
-    '''
-    function to count the occurence of a string in a list
-
-    :param input: the input list to be searched in
-    :param type: list of strings
-    :param keyword: the string to be searched for
-    :param type: string
-    :returns: int
-    '''
-    return sum ( 1 for s in input if keyword in s)
 

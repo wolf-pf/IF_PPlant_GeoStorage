@@ -45,7 +45,11 @@ def __main__(md):
     #data = CallStorageSimulation(-1.15741, 3, 3600, 'discharging')
     '''end of debug values'''
 
-    for tstep in time_series.index: #what is this loop doing? Is this the main time stepping loop?
+    #for tstep in time_series.index: #what is this loop doing? Is this the main time stepping loop?
+    for tstep in range(number_timesteps_total): #what is this loop doing? Is this the main time stepping loop?
+        current_time = (tstep + 1) * tstep_length #anpassen!?
+        
+        target_power = time_series.look_up(current_time)
         p0 = 0.0
         
         # get initial pressure (equals the pressure of the last timestep after the first iteration
@@ -53,8 +57,8 @@ def __main__(md):
             p0 = geostorage.CallStorageSimulation( 0.0, 0, md.stepwidth, 'init')
         
         # calculate pressure, mass flow and power
-        p, m, power = calc_timestep(power_plant, geostorage,
-                                        time_series.power[tstep ], p0, md, )
+        p, m, m_corr, power = calc_timestep(power_plant, geostorage,
+                                        target_power, p0, md, tstep )
         #save last pressure (p1) for next time step as p0
         p0 = p
         
@@ -98,7 +102,8 @@ def calc_timestep(power_plant, geostorage, power, p0, md, tstep):
     #moved inner iteration into timestep function, 
     #iterate until timestep is accepted
 
-    for sub_step in range(md.num_timesteps): #are these sub-timesteps or time-specific iterations?
+    for iter_step in range(md.max_iter): #do time-specific iterations
+
         if tstep_acctpted == True:
             break
         
@@ -107,28 +112,24 @@ def calc_timestep(power_plant, geostorage, power, p0, md, tstep):
 
         if storage_mode == 'charge' or storage_mode == 'discharge':
             # pressure check
-            if ((abs((p0 - p1) / p1) > md.gap_rel or md.iter_count < md.min_iter) and md.iter_count < md.max_iter):
-                md.iter_count += 1
-                #calc_timestep(power_plant, storage, power, p1)
+            if abs((p0 - p1) / p1) > md.gap_rel or abs((p0 - p1)) > md.gap_abs:
+                continue
             # if pressure check is successful, mass flow check:
             # check for difference due to pressure limitations
             elif abs((m - m_corr) / m_corr) > md.gap_rel:
                 power = power_plant.get_power(p1, m_corr)
-                #return p1, m_corr, power_corr
-            # return values
+                tstep_acctpted = True
             else:
                 #return p1, m_corr, power
                 tstep_accepted = True
                 m = m_corr
         else:
             tstep_accepted = True
-        # return pressure if mass flow is zero
-        #else:
-        #    return p1, m, power
+        
     if tstep_accepted != True:
         print('Problem: Results in timestep ', tstep, 'did not converge, accepting last iteration result.')
-        
-    return p1, m, power
+
+    return p1, m, m_corr, power
     
 
 

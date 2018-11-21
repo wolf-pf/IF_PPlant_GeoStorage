@@ -9,7 +9,8 @@ Created on Mon Feb 12 15:17:46 2018
 import pandas as pd
 import numpy as np
 import power_plant as pp
-import storage as sto
+#import storage as sto
+import geostorage as geo_sto
 
 
 def __main__(md):
@@ -28,9 +29,19 @@ def __main__(md):
 
     # create instances for power plant and storage
     power_plant = pp.model(md.pp)
-    storage = sto.model(md.sto)
-
+    #storage = sto.model(md.sto)
+    
     time_series = read_series(md.ts_path)
+
+    #get input control file for storage simulation
+    '''debug values from here onwards'''
+    #if tstep == 1:
+    geo_sto.InitializeStorageDefaults(r'.\testdata\testcase.storage_ctrl')
+    #data = [0.0, 0.0]
+    #data = entry_node(1.15741, 1, 3600, 'charging', sim_defaults)
+    #data = entry_node(0.0, 2, 3600, 'shut-in', sim_defaults)
+    #data = entry_node(-1.15741, 3, 3600, 'discharging', sim_defaults)
+    '''end of debug values'''
 
     for T in time_series.index:
 

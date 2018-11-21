@@ -1,6 +1,7 @@
 <storage_simulator_data>
 	<identifier>
-		e300
+  
+	e300
 	</identifier>
 	<simulator_path>
 		C:\ecl\2017.2\bin\pc_x86_64
@@ -23,14 +24,14 @@
 		9
 	</count>
 	<data>
-		Well_c, 35, 120
-		Well_n, 35, 120
-		Well_ne, 35, 120
-		Well_e, 35, 120
-		Well_se, 35, 120
-		Well_s, 35, 120
-		Well_sw, 35, 120
-		Well_w, 35, 120
-		Well_nw, 35, 120
+		Well_c 35 120
+		Well_n 35 120
+		Well_ne 35 120
+		Well_e 35 120
+		Well_se 35 120
+		Well_s 35 120
+		Well_sw 35 120
+		Well_w 35 120
+		Well_nw 35 120
 	</data>
 </well_data>

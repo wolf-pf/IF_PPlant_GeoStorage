@@ -25,9 +25,15 @@ class geo_sto:
         self.well_lower_BHP = []
         self.well_upper_BHP = []
         self.keep_ecl_logs = False
+        self.debug_flag = False
+
+    #self.debug_flag = kwargs.get('DEBUG_FLAG')
     
     def set_ecl_log_flag(self, a_flag):
         self.keep_ecl_logs = a_flag
+
+    def set_debug_flag(self, a_flag):
+        self.debug_flag = a_flag
 
     def set_path(self, a_path):
         self.path = a_path
@@ -65,7 +71,6 @@ class geo_sto:
 
         # read and clean control file
         sto_ctrl_list = util.cleanControlFileList(util.getFile(path_to_ctrl))       
-
     
         #search for simulation data
         #get beginning and end 
@@ -81,6 +86,10 @@ class geo_sto:
             else: 
                 print('Input for ecl log file not understood. Setting flag to True')
                 self.set_ecl_log_flag(True)
+        else:
+            print('ERROR: No storage simulator data found in file:')
+            print(path_to_ctrl)
+        
         if util.getValuefromControlFileList(sto_ctrl_list, 'well_data') is not 'KEY_NOT_FOUND':
             well_count_loc = util.getValuefromControlFileList(sto_ctrl_list, 'count')
             if well_count_loc is not 'KEY_NOT_FOUND':
@@ -94,6 +103,23 @@ class geo_sto:
                         self.add_well_lower_BHP_val(float(temp_list[1]))
                         self.add_well_upper_BHP_val(float(temp_list[2]))
                         #print(' Well name: ', temp_list[0], '\tBHP range: ', temp_list[1], '-', temp_list[2], ' bars')
+        else:
+            print('ERROR: No well data found in file:')
+            print(path_to_ctrl)
+
+        if self.debug_flag == True:
+            print('DEBUG-OUTPUT for storage control data')
+            print('Selected simulator:\t', self.simulator)
+            print('Simulator path:\t', self.simulator_path)
+            print('Simulation title:\t', self.simulation_title)
+            print('Simulation path:\t', self.path)
+            print('Restart ID:\t', self.restart_id)
+            print('Safe ECL log files:\t', self.keep_ecl_logs)
+            print('Number of wells:\t', str(len(self.well_names)))
+            for i in range(len(self.well_names)):
+                print('\t', self.well_names[i], ', ', self.well_lower_BHP[i], 'bars, ', self.well_upper_BHP[i], 'bars')
+            print('END of DEBUG-OUTPUT for storage control data')
+
 
 
     def CallStorageSimulation(self, target_flow, tstep, tstepsize, op_mode):

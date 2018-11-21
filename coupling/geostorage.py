@@ -3,7 +3,8 @@
 
 """
 
-@author: wtp
+__author__ = "wtp"
+
 """
 
 class geo_sto:
@@ -150,7 +151,7 @@ class geo_sto:
         else:
             print('ERROR: simulator flag not understood. Is: ', self.simulator)
         
-        return (flowrate, pressure)
+        return pressure, flowrate
     
     
     def RunECLIPSE(self, target_flowrate, tstep, tstepsize, current_mode):
@@ -169,23 +170,30 @@ class geo_sto:
         '''
 
         print('######################################################################')
-        print('Running storage simulation for timestep:\t', '%.0f'%tstep)
-        print('timestep size:\t\t\t\t\t', tstepsize, '\t\ts')
-        print('target storage flowrate:\t\t\t', '%.6f'%target_flowrate, '\tsm3/s')
-        print('operational mode:\t\t\t\t', current_mode)
-        print('----------------------------------------------------------------------')
+        if not current_mode == 'init':
+            print('Running storage simulation for timestep:\t', '%.0f'%tstep)
+            print('timestep size:\t\t\t\t\t', tstepsize, '\t\ts')
+            print('target storage flowrate:\t\t\t', '%.6f'%target_flowrate, '\tsm3/s')
+            print('operational mode:\t\t\t\t', current_mode)
+            print('----------------------------------------------------------------------')
+        else:
+            print('Running storage simulation to obtain initial pressure')
         
         # assembling current ecl data file
         self.reworkECLData(tstep, tstepsize, target_flowrate, current_mode)
         # executing eclipse
-        self.ExecuteECLIPSE(tstep)
+        self.ExecuteECLIPSE(tstep, current_mode)
         # reading results
         ecl_results = self.GetECLResults(tstep, current_mode)
         # returns achieved flowrate, pressure, ?
     
-        print('Timestep ', tstep, ' completed.')
-        print('Pressure actual:\t', '%.6f'%ecl_results[0], '\tbars')
-        print('Flowrate actual:\t', '%.6f'%ecl_results[1], '\tsm3/s')
+        if not current_mode == 'init':
+            print('Timestep ', tstep, ' completed.')
+            print('Pressure actual:\t', '%.6f'%ecl_results[0], '\tbars')
+            print('Flowrate actual:\t', '%.6f'%ecl_results[1], '\tsm3/s')
+        else:
+            print('Running storage simulation to obtain initial pressure')
+            print('Initial pressure is: \t', '%.6f'%ecl_results[0], '\tbars')
         print('######################################################################')
         return (ecl_results[1], ecl_results[0])
     
@@ -306,7 +314,8 @@ class geo_sto:
                     line += str(well_target_days) + '\t'
                     line += '1*\t1*\t' + str(self.well_lower_BHP[idx]) + '/\n'
                     ecl_data_file.append(line)
-            elif op_mode == 'shut-in':
+
+            elif op_mode == 'shut-in' or op_mode == 'init':
                 ecl_data_file.append("WCONINJE\n")
                 for idx in range(len(self.well_names)):
                     line = '\'' + self.well_names[idx] + '\''
@@ -324,24 +333,34 @@ class geo_sto:
             ecl_data_file += file_finish
     
             #save to new file
-            temp_path = self.path + '\\' + self.simulation_title + '.DATA'
+            if not op_mode == 'init':
+                temp_path = self.path + '\\' + self.simulation_title + '.DATA'
+            else:
+                temp_path = self.path + '\\' + self.simulation_title + '_init.DATA'
             writeFile(temp_path, ecl_data_file)
     
     
     
-    def ExecuteECLIPSE(self, tstep):
+    def ExecuteECLIPSE(self, tstep, op_mode):
         '''
         Function to call eclipse executable
 
         :param tstep: current timestep
         :param type: int
+        :param op_mode: operational mode of storage simulation
+        :param type: str
         :returns: no return value
         '''
         #import subprocess
         import os
     
         if os.name == 'nt':
-            simulation_path = self.path + '\\' + self.simulation_title + '.DATA'
+            simulation_path = ''
+            if not op_mode == 'init':
+                simulation_path = self.path + '\\' + self.simulation_title + '.DATA'
+            else:
+                simulation_path = self.path + '\\' + self.simulation_title + '_init.DATA'
+
             if self.keep_ecl_logs == True:
                 log_file_path = self.path + '\\' + 'log_' + self.simulation_title + '_' + str(tstep) + '.txt'
             else:
@@ -367,7 +386,10 @@ class geo_sto:
         '''
         
         #first read the results file
-        filename = self.path + '\\' + self.simulation_title + '.RSM'  
+        if not current_op_mode == 'init':
+            filename = self.path + '\\' + self.simulation_title + '.RSM'
+        else:
+            filename = self.path + '\\' + self.simulation_title + '_init.RSM'
         results = getFile(filename)
         #sort the rsm data to a more uniform dataset
         reorderd_rsm_data = self.rearrangeRSMDataArray(results)
@@ -396,6 +418,17 @@ class geo_sto:
         for i in bhp_positions:
             well_pressures.append(float(well_results[-1][i]))
             well_names.append(well_results[2][i])
+            if well_pressures[-1] == 0.0:
+                print('Problem: well pressure for well ', well_names[-1], ' is zero. Setting to corresponding BHP limit' )
+                bhp_limits_well = self.getWellBHPLimits(well_names[-1])
+                if current_op_mode == 'discharging':
+                    well_pressures[-1] = bhp_limits_well[0]
+                elif current_op_mode == 'charging' or current_op_mode == 'shut-in':
+                    well_pressures[-1] = bhp_limits_well[1]
+                else:
+                    print('Problem: could not determine operational mode, assuming injection')
+                    well_pressures[-1] = bhp_limits_well[1]
+                
         
         # now get well flow rates
         if current_op_mode == 'discharging': #negative flow rates
@@ -413,7 +446,7 @@ class geo_sto:
                 well_flowrates_days.append(float(well_results[-1][i]))
                 well_names_loc.append(well_results[2][i])
     
-        elif current_op_mode == 'shut-in':
+        elif current_op_mode == 'shut-in' or current_op_mode == 'init':
             #do nothing
             pass
         else: 
@@ -455,7 +488,19 @@ class geo_sto:
         # to-do: return mass flow rate instead of volumetric flow data
         return [pressure_actual, flowrate_actual]
     
-    
+    def getWellBHPLimits(self, well_name):
+        '''
+        function to obtain pressure limits for a given well
+        :param well_name: well identifier used to search well list
+        :param type: string
+        :returns: tuple of float, lower and upper BHP limit
+        '''
+        for i in range(len(self.well_names)):
+            if self.well_names[i] == well_name:
+                return [self.well_lower_BHP[i], self.well_upper_BHP[i]]
+
+        return [0.0, 0.0]
+
 
 def writeFile(path, a_list):
     '''

@@ -2,7 +2,7 @@
   "profile": "tabular-data-package",
   "title": "power plant dispatch",
   "description": "Model results from renpass with 100 % renewbalbe scenario based on e-highway X7",
-  "method": "spline",
+  "method": "tespy",
   "tespy_charge_path": "power_plant/TES_comp",
   "tespy_discharge_path": "power_plant/TES_exp",
   "spline_charge_path": "power_plant/TES_comp/lut_TES_comp.csv",

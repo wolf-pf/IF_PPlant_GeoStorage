@@ -1,4 +1,2 @@
-label;cp;busses;bus_factors;mode;design;offdesign
-fresh air;source;[];[];auto;[];[]
-cold reservoir;source;[];[];auto;[];[]
-source;source;[];[];auto;[];[]
+label;cp;busses;bus_param;bus_P_ref;bus_char;mode;design;offdesign
+fresh air;source;[];[];[];[];auto;[];[]

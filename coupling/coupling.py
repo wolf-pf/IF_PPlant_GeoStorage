@@ -33,10 +33,13 @@ def __main__(md):
 
     # create instances for power plant and storage
     power_plant = pp.model(md.pp)
-    #storage = sto.model(md.sto)
-    geostorage = gs.geo_sto() 
+    geostorage = gs.geo_sto()
 
     time_series = read_series(md.ts_path)
+    ts_out = read_series(md.ts_path)
+    ts_out = ts_out.reindex(columns=ts_out.columns.tolist() +
+                            ['pressure', 'massflow', 'massflow_actual',
+                             'power_actual', 'success'])
 
     #get input control file for storage simulation
     '''debug values from here onwards'''
@@ -50,24 +53,28 @@ def __main__(md):
 
     #for tstep in time_series.index: #what is this loop doing? Is this the main time stepping loop?
     for tstep_loc in range(self.tsteps_total): #what is this loop doing? Is this the main time stepping loop?
-        current_time = (tstep_loc + 1) * self.tstep_length  #anpassen!?
-        
-        target_power = time_series.look_up(current_time)
+        current_time = tstep_loc * self.tstep_length + time_series.index[0] #anpassen!?
+
+        target_power = time_series.loc[current_time].power / 100
         p0 = 0.0
-        
+
         # get initial pressure (equals the pressure of the last timestep after the first iteration
         if tstep == 0: #do we start at 0 or 1?
             p0 = geostorage.CallStorageSimulation( 0.0, 0, self.tstep_length, 'init')
-        
+
         # calculate pressure, mass flow and power
-        p, m, m_corr, power = calc_timestep(power_plant, geostorage,
+        p, m, m_corr, power, tstep_acctpted = calc_timestep(power_plant, geostorage,
                                         target_power, p0, md, tstep_loc )
+
         #save last pressure (p1) for next time step as p0
         p0 = p
-        
+
         # write pressure, mass flow and power to .csv
-        write_timestep(md.out_path, np.array([tstep_loc * self.tstep_length,
-                                                  p, m, power]))
+        ts_out.loc[current_time, 'pressure':'success'] = np.array(
+                [p, m, m_corr, power, tstep_acctpted])
+
+        if tstep % 10 == 0:
+            ts_out.to_csv(md.out_path)
 
 
     def InitializeCoupledSimulation(self, path_to_ctrl, debug):
@@ -164,16 +171,16 @@ def calc_timestep(power_plant, geostorage, power, p0, md, tstep):
         storage_mode = 'charge'
         m = power_plant.get_mass_flow(power, p0, storage_mode)
 
-    #moved inner iteration into timestep function, 
+    #moved inner iteration into timestep function,
     #iterate until timestep is accepted
 
-    for iter_step in range(md.max_iter): #do time-specific iterations
+    for iter_step in range(self.max_iter): #do time-specific iterations
 
         if tstep_acctpted == True:
             break
-        
+
         #get pressure for the given target rate and the actually achieved flow rate from storage simulation
-        p1, m_corr = geostorage.CallStorageSimulation(m, tstep ,md.stepwidth, storage_mode )
+        p1, m_corr = geostorage.CallStorageSimulation(m, tstep ,self.tstep_length, storage_mode )
 
         if storage_mode == 'charge' or storage_mode == 'discharge':
             # pressure check
@@ -190,25 +197,11 @@ def calc_timestep(power_plant, geostorage, power, p0, md, tstep):
                 m = m_corr
         else:
             tstep_accepted = True
-        
+
     if tstep_accepted != True:
         print('Problem: Results in timestep ', tstep, 'did not converge, accepting last iteration result.')
 
-    return p1, m, m_corr, power
-    
-
-
-def write_timestep(path, output):
-    """
-    writes the data of the timestep to .csv-file at path
-
-    :param path: path to output file
-    :type path: str
-    :param output: output data for timestep
-    :type output: list
-    :returns: no return value
-    """
-    do_something
+    return p1, m, m_corr, power, tstep_accepted
 
 
 def read_series(path):
@@ -219,9 +212,9 @@ def read_series(path):
     :type path: str
     :returns: ts (*pandas.DataFrame*) - dataframe containing the time series
     """
-    ts = pd.read_csv(path, index_col=0, delimiter=';', decimal='.')
-    ts = ts.reindex(pd.to_datetime(ts.index))
-    ts['power'] = ts['input_power'] - ts['output_power']
+    ts = pd.read_csv(path, delimiter=',', decimal='.')
+    ts = ts.set_index(pd.to_datetime(ts.index, unit='h'))
+    ts['power'] = ts['input'] - ts['output']
     return ts
 
 
@@ -294,6 +287,7 @@ class model_data:
         self.gap_rel = kwargs.get('gap_rel', 0.01)
         self.gap_abs = kwargs.get('gap_abs', 0.5)
         self.num_timesteps = kwargs.get('num_timesteps', 1)
+        self.num_timesteps_total = kwargs.get('num_timesteps_total', 8760)
 
         if not isinstance(self.num_timesteps, int):
             raise ValueError('Number of timesteps must be an integer value.')
@@ -303,6 +297,6 @@ class model_data:
         self.iter_count = 0
         '''
 
-md = model_data(ts='test.csv', out='results.csv',
-                pp='power_plant/data.json', sto='storage/data.json')
+md = model_data(ts='input_timeseries.csv', out='output_timeseries.csv',
+                pp='power_plant/data.json')
 __main__(md)

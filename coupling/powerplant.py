@@ -27,13 +27,20 @@ class model:
     :returns: no return value
     """
 
-    def __init__(self, path):
+    def __init__(self, cd):
 
         # load data.json information into objects dictionary (= attributes of
         # the object)
+        path = (cd.working_dir + cd.powerplant_path + cd.scenario +
+                '.powerplant_ctrl.json')
+        wdir = cd.working_dir + cd.powerplant_path
         with open(path) as f:
             self.__dict__.update(json.load(f))
 
+        self.tespy_charge_path = wdir + self.tespy_charge_path
+        self.tespy_discharge_path = wdir + self.tespy_discharge_path
+        self.spline_charge_path = wdir + self.spline_charge_path
+        self.spline_discharge_path = wdir + self.spline_discharge_path
         # load tespy models with the network_reader module
         self.tespy_charge = nwkr.load_nwk(self.tespy_charge_path)
         self.tespy_charge.set_printoptions(print_level='err')
@@ -71,11 +78,13 @@ class model:
                 # set pressure at interface
                 if hasattr(self, 'cas_charge'):
                     self.cas_charge.set_attr(p=pressure)
+                    self.cas_charge.set_attr(m=np.nan)
                 else:
                     for c in self.tespy_charge.conns.index:
                         if c.t.label == 'cas':
                             self.cas_charge = c
                             self.cas_charge.set_attr(p=pressure)
+                            self.cas_charge.set_attr(m=np.nan)
                             break
                 try:
                     self.tespy_charge.solve(mode='offdesign',
@@ -95,11 +104,13 @@ class model:
                 # set pressure at interface
                 if hasattr(self, 'cas_discharge'):
                     self.cas_discharge.set_attr(p=pressure)
+                    self.cas_discharge.set_attr(m=np.nan)
                 else:
                     for c in self.tespy_discharge.conns.index:
                         if c.s.label == 'cas':
                             self.cas_discharge = c
                             self.cas_discharge.set_attr(p=pressure)
+                            self.cas_discharge.set_attr(m=np.nan)
                             break
 
                 try:
@@ -109,6 +120,7 @@ class model:
                 except:
                     print('ERROR: Could not find a solution for input pair: '
                           'P=' + str(power) + ' p=' + str(pressure))
+                    return 0
 
                 return self.cas_discharge.m.val_SI
 
@@ -156,6 +168,7 @@ class model:
         if self.method == 'tespy':
             if mode == 'charge':
                 init_file = self.tespy_charge_path + '/results.csv'
+                self.tespy_charge.busses[0].set_attr(P=np.nan)
                 # set mass flow and pressure at interface
                 if hasattr(self, 'cas_charge'):
                     self.cas_charge.set_attr(p=pressure)
@@ -172,10 +185,11 @@ class model:
                                         init_file=init_file,
                                         design_file=init_file)
 
-                return self.tespy_charge.busses[0].P
+                return self.tespy_charge.busses[0].P.val
 
             elif mode == 'discharge':
                 init_file = self.tespy_discharge_path + '/results.csv'
+                self.tespy_discharge.busses[0].set_attr(P=np.nan)
                 # set mass flow and pressure at interface
                 if hasattr(self, 'cas_discharge'):
                     self.cas_discharge.set_attr(p=pressure)
@@ -192,7 +206,7 @@ class model:
                                            init_file=init_file,
                                            design_file=init_file)
 
-                return self.tespy_discharge.busses[0].P
+                return self.tespy_discharge.busses[0].P.val
 
             else:
                 raise ValueError('Mode must be charge or discharge.')
@@ -320,9 +334,6 @@ def newton(func, deriv, params, k, **kwargs):
         i += 1
 
         if i > imax:
-#            print('Newton algorithm was not able to find a feasible'
-#                  'value for function ' + str(func) + '.')
-
             return 0
 
     return val

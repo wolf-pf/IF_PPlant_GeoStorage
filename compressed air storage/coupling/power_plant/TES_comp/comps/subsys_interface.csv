@@ -1,3 +1,0 @@
-label;cp;busses;bus_factors;mode;design;offdesign;num_inter;num_inter_set;num_inter_var
-compressor train_inlet;subsys_interface;[];[];auto;[];[];3;True;False
-compressor train_outlet;subsys_interface;[];[];auto;[];[];3;True;False

@@ -1,3 +1,0 @@
-label;cp;busses;bus_factors;mode;design;offdesign;P;P_set;P_var;eta_s;eta_s_set;eta_s_var;pr;pr_set;pr_var;vigv;vigv_set;vigv_var;Sirr;Sirr_set;Sirr_var;char_map;char_map_set;char_map_method;char_map_param
-compressor train_compressor_0;compressor;['0x7fa8b6e63828', '0x7fa8b6e630b8'];[1, 1];man;['pr', 'eta_s'];['char_map'];55946338.837235406;False;False;0.8500000000000001;True;False;5.0;True;False;0;False;False;17564.282464277356;False;False;0x7fa8b6f56550;False;default;nan
-compressor train_compressor_1;compressor;['0x7fa8b6e63828', '0x7fa8b6e630b8'];[1, -1];man;['pr', 'eta_s'];['char_map'];112078838.4493963;False;False;0.8500000000000021;True;False;13.15761520410614;False;False;0;False;False;24931.198266478892;False;False;0x7fa8b6eacdd8;False;default;nan

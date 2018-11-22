@@ -12,6 +12,7 @@ import numpy as np
 import power_plant as pp
 #import storage as sto
 import geostorage as gs
+import utility as util
 
 
 def __main__(md):
@@ -27,6 +28,8 @@ def __main__(md):
     :type md: model_data object
     :returns: no return value
     """
+    #read main input file and set control variables, e.g. paths, identifiers, ...
+
 
     # create instances for power plant and storage
     power_plant = pp.model(md.pp)
@@ -38,7 +41,7 @@ def __main__(md):
     #get input control file for storage simulation
     '''debug values from here onwards'''
     #if tstep == 1:
-    geostorage.InitializeStorageDefaults(r'.\testdata\testcase.storage_ctrl')
+    geostorage.InitializeStorageDefaults(r'.\testdata\testcase.storage_ctrl', self.debug)
     #data = [0.0, 0.0]
     #data = CallStorageSimulation(1.15741, 1, 3600, 'charging')
     #data = CallStorageSimulation(0.0, 2, 3600, 'shut-in')
@@ -46,25 +49,87 @@ def __main__(md):
     '''end of debug values'''
 
     #for tstep in time_series.index: #what is this loop doing? Is this the main time stepping loop?
-    for tstep in range(number_timesteps_total): #what is this loop doing? Is this the main time stepping loop?
-        current_time = (tstep + 1) * tstep_length #anpassen!?
+    for tstep_loc in range(self.tsteps_total): #what is this loop doing? Is this the main time stepping loop?
+        current_time = (tstep_loc + 1) * self.tstep_length  #anpassen!?
         
         target_power = time_series.look_up(current_time)
         p0 = 0.0
         
         # get initial pressure (equals the pressure of the last timestep after the first iteration
         if tstep == 0: #do we start at 0 or 1?
-            p0 = geostorage.CallStorageSimulation( 0.0, 0, md.stepwidth, 'init')
+            p0 = geostorage.CallStorageSimulation( 0.0, 0, self.tstep_length, 'init')
         
         # calculate pressure, mass flow and power
         p, m, m_corr, power = calc_timestep(power_plant, geostorage,
-                                        target_power, p0, md, tstep )
+                                        target_power, p0, md, tstep_loc )
         #save last pressure (p1) for next time step as p0
         p0 = p
         
         # write pressure, mass flow and power to .csv
-        write_timestep(md.out_path, np.array([tstep  + sub_step * md.stepwidth,
+        write_timestep(md.out_path, np.array([tstep_loc * self.tstep_length,
                                                   p, m, power]))
+
+
+    def InitializeCoupledSimulation(self, path_to_ctrl, debug):
+        '''
+        Function to set all required default data, e.g. well names, paths, ...
+        :param path_to_ctrl: path to input file containing control data
+        :param type: str
+        :returns: no return value
+        '''
+        title_loc = ''
+        dir_loc = ''
+
+        #remove trailing slash if required
+        if path_to_ctrl[-1] == '\\':
+            del path_to_ctrl[-1]
+        #get all slash positions for truncating name and path
+        idxs = [i for i,key in enumerate(path_to_ctrl) if key=='\\']
+        #append file ending if required
+        if not path_to_ctrl[-10:] == '.main_ctrl':
+            title_loc = path_to_ctrl[idxs[-1] + 1:]
+            dir_loc = path_to_ctrl[:-len(title_loc)]
+            path_to_ctrl += '\\.main_ctrl'
+        else:
+            pos_diff = len(path_to_ctrl) - idxs[-1] + 1
+            title_loc = path_to_ctrl[idxs[-1] + 1:-(pos_diff - 10)]
+            dir_loc = path_to_ctrl[:idxs[-1] + 1]
+    
+    
+        print('Reading inputile: ', title_loc)
+        print('in working directory: ', dir_loc)
+ 
+        # read and clean control file
+        main_ctrl_list = util.cleanControlFileList(util.getFile(path_to_ctrl))
+
+        if util.getValuefromControlFileList(main_ctrl_list, 'main_simulation_data') is not 'KEY_NOT_FOUND':
+            self.set_path_time_series(util.getValuefromControlFileList(main_ctrl_list, 'time_series_path'))
+            self.set_tstep_length(util.getValuefromControlFileList(main_ctrl_list, 'time_step_length'))
+            self.set_tsteps_total(util.getValuefromControlFileList(main_ctrl_list, 'time_steps'))
+            temp_str = util.getValuefromControlFileList(main_ctrl_list, 'coupling_iterations')
+            temp_lst = temp_str.split()
+            if len(temp_lst) == 2:
+                self.set_min_iter(temp_lst[0])
+                self.set_max_iter(temp_lst[1])
+            else:
+                print('Problem: Coupling iteration keyword not understood, assuming 10 iterations max')
+                self.set_min_iter(1)
+                self.set_max_iter(10)
+            self.set_max_abs_pdiff(util.getValuefromControlFileList(main_ctrl_list, 'max_absolute_pressure_diff'))
+            self.set_max_rel_pdiff(util.getValuefromControlFileList(main_ctrl_list, 'max_relative_pressure_diff'))
+        else:
+            print('Problem: Keyword \'main_simulation_data\' not found in input file.')
+
+        if debug == True:
+            print('DEBUG-OUTPUT for main control data')
+            print('Time series path:\t', self.path_time_series)
+            print('Time step length:\t', self.tstep_length)
+            print('Number of time steps:\t', self.tsteps_total)
+            print('iteration limits:\t', self.min_iter, '\t', self.max_iter)
+            print('Pressure convergence criteria:\t', self.max_pdiff_abs, 'bars\t', max_pdiff_rel, '%')
+            print('END of DEBUG-OUTPUT for main control data')
+
+
 
 
 def calc_timestep(power_plant, geostorage, power, p0, md, tstep):
@@ -179,8 +244,44 @@ class model_data:
     - stepwidth (*float*) - stepwidth as fractions of hours
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, path, **kwargs):
 
+        if kwargs.get('DEBUG=TRUE'):
+            self.debug_flag = True
+        else:
+            self.debug_flag = False
+        
+        self.path_to_sim = path
+        self.path_time_series = ''
+        self.tstep_length = 0.0
+        self.tsteps_total = 0
+        self.min_iter = 0
+        self.max_iter = 0
+        self.max_pdiff_abs = -1.0
+        self.max_pdiff_rel = -1.0
+
+        def set_path_time_series(self, a_path):
+            self.path_time_series = a_path
+
+        def set_tstep_length(self, a_length):
+            self.tstep_length = a_length
+        
+        def set_tsteps_total(self, count):
+            self.tsteps_total = count
+        
+        def set_min_iter(self, a_value):
+            self.min_iter = a_value
+        
+        def set_max_iter(self, a_value):
+            self.max_iter = a_value
+        
+        def set_max_abs_pdiff(self, a_value):
+            self.max_pdiff_abs = a_value
+        
+        def set_max_rel_pdiff(self, a_value):
+            self.max_pdiff_rel = a_value
+
+        '''
         self.ts_path = kwargs.get('ts')
         self.out_path = kwargs.get('out')
         self.pp = kwargs.get('pp')
@@ -200,7 +301,7 @@ class model_data:
             self.stepwidth = pd.Timedelta(3600 / self.num_timesteps, unit='s')
 
         self.iter_count = 0
-
+        '''
 
 md = model_data(ts='test.csv', out='results.csv',
                 pp='power_plant/data.json', sto='storage/data.json')

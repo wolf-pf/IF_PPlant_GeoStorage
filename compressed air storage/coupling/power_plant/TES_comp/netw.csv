@@ -1,2 +1,0 @@
-T_max;T_min;T_unit;fluids;h_max;h_min;h_unit;m_unit;p_max;p_min;p_unit
-750;1;C;['INCOMP::S800', 'air'];1200;10;kJ / kg;kg / s;90;1;bar

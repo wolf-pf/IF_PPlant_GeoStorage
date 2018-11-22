@@ -1,3 +1,0 @@
-label;cp;busses;bus_factors;mode;design;offdesign;pr;pr_set;pr_var;zeta;zeta_set;zeta_var;Sirr;Sirr_set;Sirr_var
-compressor train_vessel_0;vessel;[];[];man;['pr'];['zeta'];0.8040201005025126;False;False;6581.412145878012;False;False;89.54788786467842;False;False
-compressor train_vessel_1;vessel;[];[];man;['pr'];['zeta'];0.8040201005025126;False;False;1908.4285955709615;False;False;157.3507161017319;False;False

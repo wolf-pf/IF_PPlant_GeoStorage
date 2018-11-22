@@ -25,15 +25,15 @@ class geo_sto:
         self.well_lower_BHP = []
         self.well_upper_BHP = []
         self.keep_ecl_logs = False
-        self.debug_flag = False
+        #self.debug_flag = False
 
     #self.debug_flag = kwargs.get('DEBUG_FLAG')
     
     def set_ecl_log_flag(self, a_flag):
         self.keep_ecl_logs = a_flag
 
-    def set_debug_flag(self, a_flag):
-        self.debug_flag = a_flag
+    #def set_debug_flag(self, a_flag):
+    #    self.debug_flag = a_flag
 
     def set_path(self, a_path):
         self.path = a_path
@@ -60,7 +60,7 @@ class geo_sto:
         self.well_upper_BHP.append(value)
 
 
-    def InitializeStorageDefaults(self, path_to_ctrl):
+    def InitializeStorageDefaults(self, path_to_ctrl, debug):
         '''
         Function to set all required default data, e.g. well names, paths, ...
 
@@ -107,7 +107,7 @@ class geo_sto:
             print('ERROR: No well data found in file:')
             print(path_to_ctrl)
 
-        if self.debug_flag == True:
+        if  debug == True:
             print('DEBUG-OUTPUT for storage control data')
             print('Selected simulator:\t', self.simulator)
             print('Simulator path:\t', self.simulator_path)

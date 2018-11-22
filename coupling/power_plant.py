@@ -36,7 +36,9 @@ class model:
 
         # load tespy models with the network_reader module
         self.tespy_charge = nwkr.load_nwk(self.tespy_charge_path)
+        self.tespy_charge.set_printoptions(print_level='err')
         self.tespy_discharge = nwkr.load_nwk(self.tespy_discharge_path)
+        self.tespy_discharge.set_printoptions(print_level='err')
 
         # load splines from .csv data
         self.spline_charge = self.load_lookup(self.spline_charge_path)
@@ -75,10 +77,14 @@ class model:
                             self.cas_charge = c
                             self.cas_charge.set_attr(p=pressure)
                             break
-
-                self.tespy_charge.solve(mode='offdesign',
-                                        init_file=init_file,
-                                        design_file=init_file)
+                try:
+                    self.tespy_charge.solve(mode='offdesign',
+                                            init_file=init_file,
+                                            design_file=init_file)
+                except:
+                    print('ERROR: Could not find a solution for input pair: '
+                          'P=' + str(power) + ' p=' + str(pressure))
+                    return 0
 
                 return self.cas_charge.m.val_SI
 
@@ -96,9 +102,13 @@ class model:
                             self.cas_discharge.set_attr(p=pressure)
                             break
 
-                self.tespy_discharge.solve(mode='offdesign',
-                                           init_file=init_file,
-                                           design_file=init_file)
+                try:
+                    self.tespy_discharge.solve(mode='offdesign',
+                                               init_file=init_file,
+                                               design_file=init_file)
+                except:
+                    print('ERROR: Could not find a solution for input pair: '
+                          'P=' + str(power) + ' p=' + str(pressure))
 
                 return self.cas_discharge.m.val_SI
 
@@ -115,8 +125,14 @@ class model:
             else:
                 raise ValueError('Mode must be charge or discharge.')
 
-            return newton(reverse_2d, reverse_2d_deriv,
-                          [func, pressure, power], 0)
+            mass_flow = newton(reverse_2d, reverse_2d_deriv,
+                               [func, pressure, power], 0)
+
+            if mass_flow == 0:
+                print('ERROR: Could not find a solution for input pair: '
+                      'P=' + str(power) + ' p=' + str(pressure))
+
+            return mass_flow
 
         else:
             raise ValueError('Method must be tespy or spline.')
@@ -304,9 +320,9 @@ def newton(func, deriv, params, k, **kwargs):
         i += 1
 
         if i > imax:
-            print('Newton algorithm was not able to find a feasible'
-                  'value for function ' + str(func) + '.')
+#            print('Newton algorithm was not able to find a feasible'
+#                  'value for function ' + str(func) + '.')
 
-            break
+            return 0
 
     return val

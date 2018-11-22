@@ -10,12 +10,12 @@ __author__ = "witte, wtp"
 import pandas as pd
 import numpy as np
 import power_plant as pp
-#import storage as sto
 import geostorage as gs
 import utility as util
+import json
 
 
-def __main__(md):
+def __main__():
     """
     main function to initialise the calculation
 
@@ -30,16 +30,15 @@ def __main__(md):
     """
     #read main input file and set control variables, e.g. paths, identifiers, ...
 
+    cd = coupling_data(path='testcase.main_ctrl.json')
 
     # create instances for power plant and storage
     power_plant = pp.model(md.pp)
     geostorage = gs.geo_sto()
 
     time_series = read_series(md.ts_path)
-    ts_out = read_series(md.ts_path)
-    ts_out = ts_out.reindex(columns=ts_out.columns.tolist() +
-                            ['pressure', 'massflow', 'massflow_actual',
-                             'power_actual', 'success'])
+    ts_out = pd.Dataframe(columns=['pressure', 'massflow', 'massflow_actual',
+                                   'power_actual', 'success'])
 
     #get input control file for storage simulation
     '''debug values from here onwards'''
@@ -70,7 +69,7 @@ def __main__(md):
         p0 = p
 
         # write pressure, mass flow and power to .csv
-        ts_out.loc[current_time, 'pressure':'success'] = np.array(
+        ts_out.loc[current_time] = np.array(
                 [p, m, m_corr, power, tstep_acctpted])
 
         if tstep % 10 == 0:
@@ -101,11 +100,11 @@ def __main__(md):
             pos_diff = len(path_to_ctrl) - idxs[-1] + 1
             title_loc = path_to_ctrl[idxs[-1] + 1:-(pos_diff - 10)]
             dir_loc = path_to_ctrl[:idxs[-1] + 1]
-    
-    
+
+
         print('Reading inputile: ', title_loc)
         print('in working directory: ', dir_loc)
- 
+
         # read and clean control file
         main_ctrl_list = util.cleanControlFileList(util.getFile(path_to_ctrl))
 
@@ -218,85 +217,19 @@ def read_series(path):
     return ts
 
 
-class model_data:
+class coupling_data:
     """
     creates a data container with the main model parameters
 
     :returns: no return value
-
-    **allowed keywords** in kwargs:
-
-    - ts (*str*) - path to input time series
-    - out (*str*) - path for output time series
-    - pp (*str*) - path to power plant data
-    - sto (*str*) - path to storage data
-    - min_iter (*int*) - minimum iterations on one timestep
-    - max_iter (*int*) - maximum iterations on one timestep
-    - gap_rel (*float*) - relative gap
-    - gap_abs (*float*) - absoulte gap
-    - stepwidth (*float*) - stepwidth as fractions of hours
     """
 
-    def __init__(self, path, **kwargs):
+    def __init__(self, path):
 
-        if kwargs.get('DEBUG=TRUE'):
-            self.debug_flag = True
-        else:
-            self.debug_flag = False
-        
-        self.path_to_sim = path
-        self.path_time_series = ''
-        self.tstep_length = 0.0
-        self.tsteps_total = 0
-        self.min_iter = 0
-        self.max_iter = 0
-        self.max_pdiff_abs = -1.0
-        self.max_pdiff_rel = -1.0
+        # load data.json information into objects dictionary (= attributes of
+        # the object)
+        with open(path) as f:
+            self.__dict__.update(json.load(f))
 
-        def set_path_time_series(self, a_path):
-            self.path_time_series = a_path
 
-        def set_tstep_length(self, a_length):
-            self.tstep_length = a_length
-        
-        def set_tsteps_total(self, count):
-            self.tsteps_total = count
-        
-        def set_min_iter(self, a_value):
-            self.min_iter = a_value
-        
-        def set_max_iter(self, a_value):
-            self.max_iter = a_value
-        
-        def set_max_abs_pdiff(self, a_value):
-            self.max_pdiff_abs = a_value
-        
-        def set_max_rel_pdiff(self, a_value):
-            self.max_pdiff_rel = a_value
-
-        '''
-        self.ts_path = kwargs.get('ts')
-        self.out_path = kwargs.get('out')
-        self.pp = kwargs.get('pp')
-        self.sto = kwargs.get('sto')
-        self.min_iter = kwargs.get('min_iter', 2)
-        self.max_iter = kwargs.get('max_iter', 5)
-        if self.min_iter >= self.max_iter:
-            raise ValueError('Minimum number of iterations must be higher than'
-                             ' than maximum number of iterations.')
-        self.gap_rel = kwargs.get('gap_rel', 0.01)
-        self.gap_abs = kwargs.get('gap_abs', 0.5)
-        self.num_timesteps = kwargs.get('num_timesteps', 1)
-        self.num_timesteps_total = kwargs.get('num_timesteps_total', 8760)
-
-        if not isinstance(self.num_timesteps, int):
-            raise ValueError('Number of timesteps must be an integer value.')
-        else:
-            self.stepwidth = pd.Timedelta(3600 / self.num_timesteps, unit='s')
-
-        self.iter_count = 0
-        '''
-
-md = model_data(ts='input_timeseries.csv', out='output_timeseries.csv',
-                pp='power_plant/data.json')
-__main__(md)
+__main__()

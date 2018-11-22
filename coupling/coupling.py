@@ -9,7 +9,7 @@ __author__ = "witte, wtp"
 
 import pandas as pd
 import numpy as np
-import power_plant as pp
+import powerplant as pp
 import geostorage as gs
 import json
 import datetime
@@ -34,7 +34,7 @@ def __main__():
     cd = coupling_data(path=path)
 
     # create instances for power plant and storage
-    power_plant = pp.model(cd)
+    powerplant = pp.model(cd)
     geostorage = gs.geo_sto(cd.geostorage_path)
 
     input_ts = read_series(cd.input_timeseries_path)
@@ -74,7 +74,7 @@ def __main__():
 
         # calculate pressure, mass flow and power
         p, m, m_corr, power, success = calc_timestep(
-                power_plant, geostorage, target_power, p0, cd, t_step)
+                powerplant, geostorage, target_power, p0, cd, t_step)
 
         # save last pressure (p1) for next time step as p0
         p0 = p
@@ -86,12 +86,12 @@ def __main__():
             output_ts.to_csv(cd.output_timeseries_path)
 
 
-def calc_timestep(power_plant, geostorage, power, p0, md, tstep):
+def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
     """
     calculates one timestep of coupled power plant - storage simulation
 
-    :param power_plant: power plant model
-    :type power_plant: power_plant.model object
+    :param powerplant: powerplant model
+    :type powerplant: powerplant.model object
     :param storage: storage model
     :type storage: storage.model object
     :param power: scheduled power for timestep
@@ -113,10 +113,10 @@ def calc_timestep(power_plant, geostorage, power, p0, md, tstep):
         storage_mode = 'shut-in'
     elif power < 0:
         storage_mode = 'discharge'
-        m = power_plant.get_mass_flow(power, p0, storage_mode)
+        m = powerplant.get_mass_flow(power, p0, storage_mode)
     else:
         storage_mode = 'charge'
-        m = power_plant.get_mass_flow(power, p0, storage_mode)
+        m = powerplant.get_mass_flow(power, p0, storage_mode)
 
     #moved inner iteration into timestep function,
     #iterate until timestep is accepted
@@ -136,7 +136,7 @@ def calc_timestep(power_plant, geostorage, power, p0, md, tstep):
             # if pressure check is successful, mass flow check:
             # check for difference due to pressure limitations
             elif abs((m - m_corr) / m_corr) > md.gap_rel:
-                power = power_plant.get_power(p1, m_corr)
+                power = powerplant.get_power(p1, m_corr)
                 tstep_acctpted = True
             else:
                 #return p1, m_corr, power

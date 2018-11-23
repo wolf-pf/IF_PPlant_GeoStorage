@@ -182,13 +182,16 @@ class geo_sto:
         :returns: returns tuple of new pressure at the well (in reservoir) and actual (achieved) storage flow rate
         '''
 
+        
         print('######################################################################')
         if not current_mode == 'init':
-            print('Running storage simulation for timestep:\t', '%.0f'%tstep, ' iteration:\t', '%.0f'%iter_step)
-            print('timestep size:\t\t\t\t\t', tstepsize, '\t\ts')
-            print('target storage flowrate:\t\t\t', '%.6f'%target_flowrate, '\tsm3/s')
-            print('operational mode:\t\t\t\t', current_mode)
-            print('----------------------------------------------------------------------')
+            print('Running storage simulation:')
+            print(self.working_dir_loc + self.simulation_title + '.DATA')
+            print('Timestep/iteration:\t\t', '%.0f'%tstep, '/', '%.0f'%iter_step)
+            print('Timestep size:\t\t\t', tstepsize, '\t\ts')
+            print('Target storage flowrate:\t', '%.6f'%target_flowrate, '\tsm3/s')
+            print('Operational mode:\t\t', current_mode)
+            
         else:
             print('Running storage simulation to obtain initial pressure')
 
@@ -206,11 +209,11 @@ class geo_sto:
         ecl_results[1] = ecl_results[1] * self.surface_density
         
         if not current_mode == 'init':
-            print('Pressure actual:\t', '%.6f'%ecl_results[0], '\tbars')
-            print('Flowrate actual:\t', '%.6f'%ecl_results[1], '\tsm3/s')
+            print('Pressure actual:\t\t', '%.6f'%ecl_results[0], '\tbars')
+            print('Flowrate actual:\t\t', '%.6f'%ecl_results[1], '\tsm3/s')
         else:
-            print('Initial pressure is: \t', '%.6f'%ecl_results[0], '\tbars')
-        print('######################################################################')
+            print('Initial pressure is: \t', '%.6f'%ecl_results[0], 'bars')
+        print('----------------------------------------------------------------------')
         return (ecl_results[1], ecl_results[0])
     
 
@@ -272,7 +275,7 @@ class geo_sto:
         '''
         # open and read eclipse data file
         ecl_data_file = util.getFile(self.working_dir_loc + self.simulation_title + '.DATA')
-        print(self.working_dir_loc + self.simulation_title + '.DATA')
+        #print(self.working_dir_loc + self.simulation_title + '.DATA')
         
         #rearrange the entries in the saved list
         if timestep == 1:
@@ -379,7 +382,7 @@ class geo_sto:
         file_ending += temp_nr_str
 
         if tstep > 0:
-            print('Attempting to delete file: *', file_ending, ' in timestep ', tstep)
+            #print('Attempting to delete file: *', file_ending, ' in timestep ', tstep)
             path_loc = self.working_dir_loc + self.simulation_title + file_ending
             if os.path.exists(path_loc):
                 os.remove(path_loc)
@@ -520,12 +523,15 @@ class geo_sto:
 
     
             flowrate_actual = sum(well_flowrates)
-                
-            #calculate average pressure
-            pressure_actual = 0.0
-            for i in range(len(well_pressures)):
-                pressure_actual += well_pressures[i] * well_flowrates[i]
-            pressure_actual = pressure_actual / flowrate_actual
+
+            if flowrate_actual > 0.0 :    
+                #calculate average pressure
+                pressure_actual = 0.0
+                for i in range(len(well_pressures)):
+                    pressure_actual += well_pressures[i] * well_flowrates[i]
+                pressure_actual = pressure_actual / flowrate_actual
+            else:
+                pressure_actual = sum(well_pressures) / float(len(well_pressures))
         else:
             pressure_actual = sum(well_pressures) / float(len(well_pressures))
 

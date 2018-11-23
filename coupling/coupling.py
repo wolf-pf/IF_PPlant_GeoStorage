@@ -56,10 +56,14 @@ def __main__():
 
     p0 = 0.0 #old pressure (from last time step / iter)
     # get initial pressure before the time loop
+    print('######################################################################')
     p0, dummy_flow = geostorage.CallStorageSimulation(0.0, 0, 0, cd, 'init')
+    print('Simulation initialzation completed.')
+    print('######################################################################')
 
     last_time = cd.t_start
     for t_step in range(cd.t_steps_total):
+        
         current_time = datetime.timedelta(seconds=t_step * cd.t_step_length) + cd.t_start
 
         try:
@@ -123,6 +127,9 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
     #moved inner iteration into timestep function,
     #iterate until timestep is accepted
     p0_temp = p0
+    print('######################################################################')
+    print('######################################################################')
+    print('Advancing to timestep:\t', tstep, 'Operational mode is: ', storage_mode)
 
     for iter_step in range(md.max_iter): #do time-specific iterations
        
@@ -131,7 +138,7 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
             print('Message: Timestep accepted after iteration ', iter_step - 1)
             break
         
-        print('Current iteration: ', iter_step, 'Mode is: ', storage_mode)
+        print('Current iteration:\t', iter_step)
 
         #get pressure for the given target rate and the actually achieved flow rate from storage simulation
         p1, m_corr = geostorage.CallStorageSimulation(m, tstep, iter_step, md, storage_mode )
@@ -141,24 +148,34 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
             # pressure check
             if abs((p0_temp - p1) / p1) > md.pressure_diff_rel or abs((p0_temp- p1)) > md.pressure_diff_abs:
                 m = powerplant.get_mass_flow(power, p1, storage_mode)
-                print('Adjusting mass flow rate! ', '\t', p0_temp, p1, m, m_corr)
+                print('Adjusting mass flow rate.')
+                print('m / m_corr\t\t', '%.6f'%m, '/', '%.6f'%m_corr, '[kg/s]')
+                print('p0_new / p1\t\t', '%.6f'%p0_temp, '/', '%.6f'%p1, '[bars]')
+                if m == 0:
+                    print('Forcing shut-in mode as m is zero.')
+                    storage_mode = 'shut-in'
+
             # if pressure check is successful, mass flow check:
             # check for difference due to pressure limitations
             elif abs(m_corr) <= 1E-5:
                 power = 0
                 tstep_accepted = True
-                print('Adjusting power to zero! ', '\t', p0_temp, p1, m, m_corr)
+                print('Adjusting power to ZERO')
+                print('m / m_corr\t\t', '%.6f'%m, '/', '%.6f'%m_corr, '[kg/s]')
+                print('p0_new / p1\t\t', '%.6f'%p0_temp, '/', '%.6f'%p1, '[bars]')
 
             elif abs((m - m_corr) / m_corr) > md.flow_diff_rel:
                 power = powerplant.get_power(m_corr, p1, storage_mode)
                 tstep_accepted = True
-                print('Adjusting power to ', power, ' ! ', '\t', p0_temp, p1, m, m_corr)
+                print('Adjusting power to ', power)
+                print('m / m_corr\t\t', '%.6f'%m, '/', '%.6f'%m_corr, '[kg/s]')
+                print('p0_new / p1\t\t', '%.6f'%p0_temp, '/', '%.6f'%p1, '[bars]')
 
             else:
                 #return p1, m_corr, power
                 tstep_accepted = True
                 m = m_corr
-        
+
         elif storage_mode == "shut-in":
             print('Force accepting timestep b/c storage shut-in')
             tstep_accepted = True

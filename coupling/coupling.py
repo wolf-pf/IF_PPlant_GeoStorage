@@ -13,6 +13,7 @@ import powerplant as pp
 import geostorage as gs
 import json
 import datetime
+import os
 
 
 def __main__():
@@ -28,49 +29,41 @@ def __main__():
     :type md: model_data object
     :returns: no return value
     """
+    
     #read main input file and set control variables, e.g. paths, identifiers, ...
-    path = ('/home/witte/nextcloud/Documents/angus_model_coupling/testdata/'
-            'testcase.main_ctrl.json')
+    path = (r'E:\Programming\IF_PPlant_GeoStorage\testdata\testcase.main_ctrl.json')
     cd = coupling_data(path=path)
 
     # create instances for power plant and storage
     powerplant = pp.model(cd)
-    geostorage = gs.geo_sto(cd.geostorage_path)
+    geostorage = gs.geo_sto(cd)
 
-    input_ts = read_series(cd.input_timeseries_path)
-    output_ts = pd.Dataframe(columns=['pressure', 'massflow',
+    input_ts = read_series(cd.working_dir + cd.input_timeseries_path)
+    output_ts = pd.DataFrame(columns=['pressure', 'massflow',
                                       'massflow_actual', 'power_actual',
                                       'success'])
-
     #get input control file for storage simulation
     '''debug values from here onwards'''
     #if tstep == 1:
-    geostorage.InitializeStorageDefaults(r'.\testdata\testcase.storage_ctrl', self.debug)
+    #geostorage.InitializeStorageDefaults(r'.\testdata\testcase.storage_ctrl', self.debug)
     #data = [0.0, 0.0]
-    #data = CallStorageSimulation(1.15741, 1, 3600, 'charging')
-    #data = CallStorageSimulation(0.0, 2, 3600, 'shut-in')
-    #data = CallStorageSimulation(-1.15741, 3, 3600, 'discharging')
+    #data = geostorage.CallStorageSimulation(1.15741, 1, cd, 'charging')
+    #data = geostorage.CallStorageSimulation(0.0, 2, cd, 'shut-in')
+    #data = geostorage.CallStorageSimulation(-1.15741, 3, cd, 'discharging')
     '''end of debug values'''
-
-    #for tstep in time_series.index: #what is this loop doing? Is this the main time stepping loop?
+    p0 = 0.0 #old pressure (from last time step / iter)
+    # get initial pressure before the time loop
+    p0 = geostorage.CallStorageSimulation(0.0, 0, cd, 'init')
 
     last_time = cd.t_start
     for t_step in range(cd.t_steps_total):
-        current_time = t_step * cd.t_step_length + cd.t_start
+        current_time = datetime.timedelta(seconds=t_step * cd.t_step_length) + cd.t_start
 
         try:
             target_power = input_ts.loc[current_time].power / 100 * 1e6
             last_time = current_time
         except KeyError:
             target_power = input_ts.loc[last_time].power / 100 * 1e6
-
-        p0 = 0.0
-
-        # get initial pressure (equals the pressure of the last timestep after
-        # the first iteration
-        if t_step == 0:
-            p0 = geostorage.CallStorageSimulation(
-                    0.0, 0, cd.t_step_length, 'init')
 
         # calculate pressure, mass flow and power
         p, m, m_corr, power, success = calc_timestep(
@@ -121,13 +114,14 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
     #moved inner iteration into timestep function,
     #iterate until timestep is accepted
 
-    for iter_step in range(self.max_iter): #do time-specific iterations
+    for iter_step in range(md.max_iter): #do time-specific iterations
 
         if tstep_acctpted == True:
+            print('Message: Timestep accepted after iteration ', iter_step - 1)
             break
 
         #get pressure for the given target rate and the actually achieved flow rate from storage simulation
-        p1, m_corr = geostorage.CallStorageSimulation(m, tstep ,self.tstep_length, storage_mode )
+        p1, m_corr = geostorage.CallStorageSimulation(m, tstep, md, storage_mode )
 
         if storage_mode == 'charge' or storage_mode == 'discharge':
             # pressure check
@@ -181,6 +175,7 @@ class coupling_data:
         with open(path) as f:
             self.__dict__.update(json.load(f))
 
+
         self.coupled_simulation()
 
     def coupled_simulation(self):
@@ -192,10 +187,20 @@ class coupling_data:
 
         str_tmp = self.path.strip('.main_ctrl.json')
         self.scenario = ""
+        self.working_dir = ""
 
         i = 0
+        key = ""
+        if os.name == 'nt':
+            key = "\\"
+        elif os.name == 'posix':
+            key = "/"
+        else:
+            print('Error: OS not supported')
+
+
         for c in str_tmp[::-1]:
-            if c == "/":
+            if c == key:
                 self.working_dir = str_tmp[:-i]
                 break
             self.scenario += c
@@ -209,7 +214,7 @@ class coupling_data:
         print('Reading inputile \"' + self.scenario + '.main_ctrl.json\" '
               'in working directory \"' + self.working_dir + '\"')
 
-        if self.debug:
+'''        if self.debug:
             print('DEBUG-OUTPUT for main control data')
             print('Time series path:\t' + self.input_timeseries_path)
             print('Start time:\t' + str(self.t_start))
@@ -220,7 +225,7 @@ class coupling_data:
             print('Pressure convergence criteria:\t' +
                   str(self.pressure_diff_abs) +
                   ' bars\t' + str(self.pressure_diff_rel * 100) + ' %')
-            print('END of DEBUG-OUTPUT for main control data')
+            print('END of DEBUG-OUTPUT for main control data')'''
 
 
 __main__()

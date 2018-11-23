@@ -1,8 +1,8 @@
 {
-	"input_timeseries_path": "input_timeseries.csv",
-	"output_timeseries_path": "output_timeseries.csv",
-	"geostorage_path": "geostorage/",
-	"powerplant_path": "powerplant/",
+	"input_timeseries_path": ".\\input_timeseries.csv",
+	"output_timeseries_path": ".\\output_timeseries.csv",
+	"geostorage_path": "geostorage\\",
+	"powerplant_path": "powerplant\\",
 	"t_start": "1970-03-15 00:00:00",
 	"t_steps_total": 150,
 	"t_step_length": 3600,

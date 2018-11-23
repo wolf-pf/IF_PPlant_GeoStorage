@@ -13,6 +13,7 @@ import powerplant as pp
 import geostorage as gs
 import json
 import datetime
+import os
 
 
 def __main__():
@@ -28,37 +29,35 @@ def __main__():
     :type md: model_data object
     :returns: no return value
     """
+    
     #read main input file and set control variables, e.g. paths, identifiers, ...
-    path = ('/home/witte/nextcloud/Documents/angus_model_coupling/testdata/'
-            'testcase.main_ctrl.json')
+    path = (r'E:\Programming\IF_PPlant_GeoStorage\testdata\testcase.main_ctrl.json')
     cd = coupling_data(path=path)
 
     # create instances for power plant and storage
     powerplant = pp.model(cd)
-    geostorage = gs.geo_sto(cd.geostorage_path)
+    geostorage = gs.geo_sto(cd)
 
-    input_ts = read_series(cd.input_timeseries_path)
-    output_ts = pd.Dataframe(columns=['pressure', 'massflow',
+    input_ts = read_series(cd.working_dir + cd.input_timeseries_path)
+    output_ts = pd.DataFrame(columns=['pressure', 'massflow',
                                       'massflow_actual', 'power_actual',
                                       'success'])
-
     #get input control file for storage simulation
     '''debug values from here onwards'''
     #if tstep == 1:
-    geostorage.InitializeStorageDefaults(r'.\testdata\testcase.storage_ctrl', self.debug)
+    #geostorage.InitializeStorageDefaults(r'.\testdata\testcase.storage_ctrl', self.debug)
     #data = [0.0, 0.0]
-    #data = CallStorageSimulation(1.15741, 1, 3600, 'charging')
-    #data = CallStorageSimulation(0.0, 2, 3600, 'shut-in')
-    #data = CallStorageSimulation(-1.15741, 3, 3600, 'discharging')
+    #data = geostorage.CallStorageSimulation(1.15741, 1, cd, 'charging')
+    #data = geostorage.CallStorageSimulation(0.0, 2, cd, 'shut-in')
+    #data = geostorage.CallStorageSimulation(-1.15741, 3, cd, 'discharging')
     '''end of debug values'''
-
     p0 = 0.0 #old pressure (from last time step / iter)
     # get initial pressure before the time loop
-    p0 = geostorage.CallStorageSimulation(0.0, 0, cd.t_step_length, 'init')
+    p0 = geostorage.CallStorageSimulation(0.0, 0, cd, 'init')
 
     last_time = cd.t_start
     for t_step in range(cd.t_steps_total):
-        current_time = t_step * cd.t_step_length + cd.t_start
+        current_time = datetime.timedelta(seconds=t_step * cd.t_step_length) + cd.t_start
 
         try:
             target_power = input_ts.loc[current_time].power / 100 * 1e6
@@ -176,6 +175,7 @@ class coupling_data:
         with open(path) as f:
             self.__dict__.update(json.load(f))
 
+
         self.coupled_simulation()
 
     def coupled_simulation(self):
@@ -187,10 +187,20 @@ class coupling_data:
 
         str_tmp = self.path.strip('.main_ctrl.json')
         self.scenario = ""
+        self.working_dir = ""
 
         i = 0
+        key = ""
+        if os.name == 'nt':
+            key = "\\"
+        elif os.name == 'posix':
+            key = "/"
+        else:
+            print('Error: OS not supported')
+
+
         for c in str_tmp[::-1]:
-            if c == "/":
+            if c == key:
                 self.working_dir = str_tmp[:-i]
                 break
             self.scenario += c

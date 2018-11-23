@@ -31,8 +31,9 @@ class geo_sto:
 
         #self.simulator = ''
         #self.simulator_path = ''
-        self.working_dir = wdir
+        self.working_dir_loc = wdir
         self.simulation_title = cd.scenario
+        self.keep_ecl_logs = bool(self.keep_ecl_logs)
         #self.restart_id = ''
         #self.well_names = []
         #self.well_lower_BHP = []
@@ -74,15 +75,15 @@ class geo_sto:
     
 
     def InitializeStorageDefaults(self, path_to_ctrl, debug):
-        '''
-        '''
+    '''
+    '''
         Function to set all required default data, e.g. well names, paths, ...
 
         :param path_to_ctrl: path to input file containing control data
         :param type: str
         :returns: no return value
         '''
-        '''
+    '''
         # read and clean control file
         sto_ctrl_list = util.cleanControlFileList(util.getFile(path_to_ctrl))       
     
@@ -273,7 +274,7 @@ class geo_sto:
         :returns: no return value
         '''
         # open and read eclipse data file
-        ecl_data_file = util.getFile(self.working_dir + '\\' + self.simulation_title + '.DATA')
+        ecl_data_file = util.getFile(self.working_dir_loc + self.simulation_title + '.DATA')
         
         #rearrange the entries in the saved list
         if timestep == 2:
@@ -352,9 +353,9 @@ class geo_sto:
     
             #save to new file
             if not op_mode == 'init':
-                temp_path = self.working_dir + '\\' + self.simulation_title + '.DATA'
+                temp_path = self.working_dir_loc + self.simulation_title + '.DATA'
             else:
-                temp_path = self.working_dir + '\\' + self.simulation_title + '_init.DATA'
+                temp_path = self.working_dir_loc + self.simulation_title + '_init.DATA'
             util.writeFile(temp_path, ecl_data_file)
     
     
@@ -375,12 +376,12 @@ class geo_sto:
         if os.name == 'nt':
             simulation_path = ''
             if not op_mode == 'init':
-                simulation_path = self.working_dir + '\\' + self.simulation_title + '.DATA'
+                simulation_path = self.working_dir_loc  + self.simulation_title + '.DATA'
             else:
-                simulation_path = self.working_dir + '\\' + self.simulation_title + '_init.DATA'
+                simulation_path = self.working_dir_loc  + self.simulation_title + '_init.DATA'
 
             if self.keep_ecl_logs == True:
-                log_file_path = self.working_dir + '\\' + 'log_' + self.simulation_title + '_' + str(tstep) + '.txt'
+                log_file_path = self.working_dir_loc + 'log_' + self.simulation_title + '_' + str(tstep) + '.txt'
             else:
                 log_file_path = 'NUL'
             temp = 'eclrun ' + self.simulator + ' ' + simulation_path + ' >' + log_file_path
@@ -405,9 +406,9 @@ class geo_sto:
         
         #first read the results file
         if not current_op_mode == 'init':
-            filename = self.working_dir + '\\' + self.simulation_title + '.RSM'
+            filename = self.working_dir_loc + self.simulation_title + '.RSM'
         else:
-            filename = self.working_dir + '\\' + self.simulation_title + '_init.RSM'
+            filename = self.working_dir_loc + self.simulation_title + '_init.RSM'
         results = util.getFile(filename)
         #sort the rsm data to a more uniform dataset
         reorderd_rsm_data = self.rearrangeRSMDataArray(results)
@@ -423,7 +424,6 @@ class geo_sto:
         well_pressures = []
         well_flowrates_days = []
         well_flowrates = []
-        well_mass_flowrates = [] #not in use yet
         well_names = []
         well_names_loc = []
         flowrate_actual = 0.0
@@ -492,9 +492,10 @@ class geo_sto:
             #change unit of flowrates to sm3/s from sm3/d
             for i in range(len(well_flowrates_days)):
                 well_flowrates.append(well_flowrates_days[i] / 60.0 / 60.0 / 24.0)
+
     
             flowrate_actual = sum(well_flowrates)
-    
+                
             #calculate average pressure
             pressure_actual = 0.0
             for i in range(len(well_pressures)):
@@ -502,8 +503,7 @@ class geo_sto:
             pressure_actual = pressure_actual / flowrate_actual
         else:
             pressure_actual = sum(well_pressures) / float(len(well_pressures))
-    
-        # to-do: return mass flow rate instead of volumetric flow data
+
         return [pressure_actual, flowrate_actual]
     
     def getWellBHPLimits(self, well_name):

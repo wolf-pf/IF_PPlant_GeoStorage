@@ -1,11 +1,11 @@
 {
-	"simulator": e300,
-	"simulator_path": C:\ecl\2017.2\bin\pc_x86_64,
+	"simulator": "e300",
+	"simulator_path": "C:\\ecl\\2017.2\\bin\\pc_x86_64",
 	"restart_id": 0,
-	"keep_ecl_logs": True,
-	"well_names": [Well_c, Well_n, Well_ne, Well_e, Well_se, Well_s, Well_sw, Well_w, Well_nw],
+	"keep_ecl_logs": "True",
+	"well_names": ["Well_c", "Well_n", "Well_ne", "Well_e", "Well_se", "Well_s", "Well_sw", "Well_w", "Well_nw"],
 	"well_lower_BHP": [35, 35, 35, 35, 35, 35, 35, 35, 35],
 	"well_upper_BHP": [120, 120, 120, 120, 120, 120, 120, 120, 120],
-	"reservoir_	compartments": 1,
-	"surface_density": 1.22325,
+	"reservoir_compartments": 1,
+	"surface_density": 1.22325
 }

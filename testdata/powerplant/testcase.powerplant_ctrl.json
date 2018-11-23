@@ -4,7 +4,7 @@
 	"massflow_min_rel": 0.25,
 	"massflow_charge_max": 248.21241474911983,
 	"massflow_discharge_max": 383.49729566228024,
-	"method": "spline",
+	"method": "tespy",
 	"tespy_charge_path": "TES_comp",
 	"tespy_discharge_path": "TES_exp",
 	"spline_charge_path": "TES_comp/lut_TES_comp.csv",

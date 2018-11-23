@@ -8,7 +8,10 @@
 	"t_step_length": 3600,
 	"min_iter": 0,
 	"max_iter": 10,
+	"save_nth_t_step": 1, 
 	"pressure_diff_rel": 0.01,
 	"pressure_diff_abs": 0.01,
+	"flow_diff_rel": 0.01,
+	"flow_diff_abs": 0.01,
 	"debug": "True"
 }

@@ -80,7 +80,7 @@ class model:
             return 0
 
         if self.method == 'tespy':
-            if mode == 'charge':
+            if mode == 'charging':
                 init_file = self.tespy_charge_path + '/results.csv'
                 # set power of bus
                 self.tespy_charge.busses[0].set_attr(P=power)
@@ -106,7 +106,7 @@ class model:
 
                 return self.cas_charge.m.val_SI
 
-            elif mode == 'discharge':
+            elif mode == 'discharging':
                 init_file = self.tespy_discharge_path + '/results.csv'
                 # set power of bus
                 self.tespy_discharge.busses[0].set_attr(P=power)
@@ -134,17 +134,17 @@ class model:
                 return self.cas_discharge.m.val_SI
 
             else:
-                raise ValueError('Mode must be charge or discharge.')
+                raise ValueError('Mode must be charging or discharging.')
 
         elif self.method == 'spline':
-            if mode == 'charge':
+            if mode == 'charging':
                 func = self.spline_charge
 
-            elif mode == 'discharge':
+            elif mode == 'discharging':
                 func = self.spline_discharge
                 power = -power
             else:
-                raise ValueError('Mode must be charge or discharge.')
+                raise ValueError('Mode must be charging or discharging.')
 
             mass_flow = newton(reverse_2d, reverse_2d_deriv,
                                [func, pressure, power], 0)
@@ -179,7 +179,7 @@ class model:
             return 0
 
         if self.method == 'tespy':
-            if mode == 'charge':
+            if mode == 'charging':
                 m_min = self.massflow_min_rel * self.massflow_charge_max
                 m_max = self.massflow_charge_max
                 if massflow < m_min:
@@ -213,7 +213,7 @@ class model:
 
                 return self.tespy_charge.busses[0].P.val
 
-            elif mode == 'discharge':
+            elif mode == 'discharging':
                 m_min = self.massflow_min_rel * self.massflow_discharge_max
                 m_max = self.massflow_discharge_max
                 if massflow < m_min:
@@ -251,7 +251,7 @@ class model:
                 raise ValueError('Mode must be charge or discharge.')
 
         elif self.method == 'spline':
-            if mode == 'charge':
+            if mode == 'charging':
                 val = self.spline_charge.ev(massflow, pressure)
                 if abs((self.get_mass_flow(val, pressure, mode) - massflow) /
                        massflow) < 1e-5:
@@ -259,7 +259,7 @@ class model:
                 else:
                     return 0
 
-            elif mode == 'discharge':
+            elif mode == 'discharging':
                 val = self.spline_discharge.ev(massflow, pressure)
                 if abs((self.get_mass_flow(val, pressure, mode) - massflow) /
                        massflow) < 1e-5:

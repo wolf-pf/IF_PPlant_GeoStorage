@@ -9,6 +9,7 @@ __author__ = "wtp"
 
 import utilities as util
 import json
+import os
 
 class geo_sto:
     
@@ -138,7 +139,7 @@ class geo_sto:
 
 
 
-    def CallStorageSimulation(self, target_flow, tstep, coupling_data, op_mode):
+    def CallStorageSimulation(self, target_flow, tstep, iter_step, coupling_data, op_mode):
         '''
         Entry point for geo-storage simulation, handles all data transfer, executes simulator
         and provides simulation results to power plant simulator
@@ -156,7 +157,7 @@ class geo_sto:
         #this is the entry point for the geostorage coupling
     
         if(self.simulator == 'ECLIPSE' or self.simulator == 'e300'):
-            flowrate, pressure = self.RunECLIPSE(target_flow, tstep, coupling_data.t_step_length, op_mode)
+            flowrate, pressure = self.RunECLIPSE(target_flow, tstep, iter_step, coupling_data.t_step_length, op_mode)
         elif self.simulator == 'proxy':
             pass
             #implement later
@@ -166,7 +167,7 @@ class geo_sto:
         return pressure, flowrate
     
     
-    def RunECLIPSE(self, target_flowrate, tstep, tstepsize, current_mode):
+    def RunECLIPSE(self, target_flowrate, tstep, iter_step, tstepsize, current_mode):
         '''
         Function acting as a wrapper for using eclipse (SChlumberger) as a storage simulator
 
@@ -183,7 +184,7 @@ class geo_sto:
 
         print('######################################################################')
         if not current_mode == 'init':
-            print('Running storage simulation for timestep:\t', '%.0f'%tstep)
+            print('Running storage simulation for timestep:\t', '%.0f'%tstep, ' iteration:\t', '%.0f'%iter_step)
             print('timestep size:\t\t\t\t\t', tstepsize, '\t\ts')
             print('target storage flowrate:\t\t\t', '%.6f'%target_flowrate, '\tsm3/s')
             print('operational mode:\t\t\t\t', current_mode)
@@ -197,21 +198,17 @@ class geo_sto:
         # assembling current ecl data file
         self.reworkECLData(tstep, tstepsize, target_flowrate, current_mode)
         # executing eclipse
-        self.ExecuteECLIPSE(tstep, current_mode)
+        self.ExecuteECLIPSE(tstep, iter_step, current_mode)
         # reading results
         ecl_results = self.GetECLResults(tstep, current_mode)
-        # returns achieved flowrate, pressure, ?
-
+        
         #adjusting to mass flow rates
         ecl_results[1] = ecl_results[1] * self.surface_density
         
-
         if not current_mode == 'init':
-            print('Timestep ', tstep, ' completed.')
             print('Pressure actual:\t', '%.6f'%ecl_results[0], '\tbars')
             print('Flowrate actual:\t', '%.6f'%ecl_results[1], '\tsm3/s')
         else:
-            print('Running storage simulation to obtain initial pressure')
             print('Initial pressure is: \t', '%.6f'%ecl_results[0], '\tbars')
         print('######################################################################')
         return (ecl_results[1], ecl_results[0])
@@ -275,9 +272,10 @@ class geo_sto:
         '''
         # open and read eclipse data file
         ecl_data_file = util.getFile(self.working_dir_loc + self.simulation_title + '.DATA')
+        print(self.working_dir_loc + self.simulation_title + '.DATA')
         
         #rearrange the entries in the saved list
-        if timestep == 2:
+        if timestep == 1:
             #look for EQUIL and RESTART keyword
             equil_pos = util.searchSection(ecl_data_file, 'EQUIL')
             if(equil_pos > 0):
@@ -285,24 +283,26 @@ class geo_sto:
                 #assemble new string for restart section
                 ecl_data_file[equil_pos] = 'RESTART\n'
                 ecl_data_file[equil_pos + 1] =  '\'' + self.simulation_title + '\' \t' 
-                ecl_data_file[equil_pos + 1] += str(int(self.restart_id) + timestep - 1)  + ' /\n'
+                ecl_data_file[equil_pos + 1] += str(int(self.restart_id) + timestep )  + ' /\n'
             else:
                 restart_pos = util.searchSection(ecl_data_file, "RESTART")
                 if restart_pos > 0:
                     #assemble new string for restart section
                     ecl_data_file[restart_pos + 1] =  '\'' + self.simulation_title + '\' \t' 
-                    ecl_data_file[restart_pos + 1] += str(int(self.restart_id) + timestep - 1)  + ' /\n'
-        if timestep > 2:
+                    ecl_data_file[restart_pos + 1] += str(int(self.restart_id) + timestep)  + ' /\n'
+        if timestep > 1:
             restart_pos = util.searchSection(ecl_data_file, "RESTART")
             if restart_pos > 0:
                 #assemble new string for restart section
                 ecl_data_file[restart_pos + 1] =  '\'' + self.simulation_title + '\' \t' 
-                ecl_data_file[restart_pos + 1] += str(int(self.restart_id) + timestep - 1)  + ' /\n'
+                ecl_data_file[restart_pos + 1] += str(int(self.restart_id) + timestep )  + ' /\n'
             
         #now rearrange the well schedule section
         schedule_pos = util.searchSection(ecl_data_file, "WCONINJE")
-        if schedule_pos == 0:
+        if schedule_pos == -1:
             schedule_pos = util.searchSection(ecl_data_file, "WCONPROD")
+
+        #print(schedule_pos)
             
         if schedule_pos > 0:
             # delete the old well schedule
@@ -314,7 +314,7 @@ class geo_sto:
             well_target_days = well_target * 60.0 * 60.0 *24.0
     
             #now construct new well schedule section
-            ecl_data_file.append('\n')
+            #ecl_data_file.append('\n')
             
             if op_mode == 'charging':
                 ecl_data_file.append("WCONINJE\n")
@@ -351,16 +351,41 @@ class geo_sto:
             file_finish = ['\n', '\n', 'TSTEP\n', '1*' + str(timestepsize_days) + '\n', '/\n', '\n', '\n', 'END\n' ]
             ecl_data_file += file_finish
     
+            
             #save to new file
             if not op_mode == 'init':
                 temp_path = self.working_dir_loc + self.simulation_title + '.DATA'
             else:
+                #print('ini mode')
                 temp_path = self.working_dir_loc + self.simulation_title + '_init.DATA'
+            #print(temp_path)
             util.writeFile(temp_path, ecl_data_file)
     
-    
-    
-    def ExecuteECLIPSE(self, tstep, op_mode):
+
+    def deleteFFile(self, tstep):
+        
+        file_ending = ".F"
+        temp_nr_str = ""
+
+        if (tstep + 1) <= 10:
+            temp_nr_str = "000" + str(tstep)
+        elif (tstep + 1) <= 100:
+            temp_nr_str = "00" + str(tstep)
+        elif (tstep + 1) <= 1000:
+            temp_nr_str = "0" + str(tstep)
+        else:
+            temp_nr_str =  str(tstep)
+        
+        file_ending += temp_nr_str
+
+        if tstep > 0:
+            print('Attempting to delete file: *', file_ending, ' in timestep ', tstep)
+            path_loc = self.working_dir_loc + self.simulation_title + file_ending
+            if os.path.exists(path_loc):
+                os.remove(path_loc)
+
+
+    def ExecuteECLIPSE(self, tstep, iter_step, op_mode):
         '''
         Function to call eclipse executable
 
@@ -371,7 +396,7 @@ class geo_sto:
         :returns: no return value
         '''
         #import subprocess
-        import os
+        #import os
     
         if os.name == 'nt':
             simulation_path = ''
@@ -381,7 +406,7 @@ class geo_sto:
                 simulation_path = self.working_dir_loc  + self.simulation_title + '_init.DATA'
 
             if self.keep_ecl_logs == True:
-                log_file_path = self.working_dir_loc + 'log_' + self.simulation_title + '_' + str(tstep) + '.txt'
+                log_file_path = self.working_dir_loc + 'log_' + self.simulation_title + '_' + str(tstep) + '_' + str(iter_step) + '.txt'
             else:
                 log_file_path = 'NUL'
             temp = 'eclrun ' + self.simulator + ' ' + simulation_path + ' >' + log_file_path
@@ -454,7 +479,7 @@ class geo_sto:
             flow_keyword = 'WGPR'
             flow_positions = util.getStringPositions(well_results[0], flow_keyword)
             for i in flow_positions:
-                well_flowrates_days.append(float(well_results[-1][i]) * -1.0) #ecl flowrates are always positive
+                well_flowrates_days.append(float(well_results[-1][i]))
                 well_names_loc.append(well_results[2][i])
                    
         elif current_op_mode == 'charging': #positive flow rates

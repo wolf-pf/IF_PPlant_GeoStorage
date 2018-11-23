@@ -27,7 +27,7 @@ class model:
     :returns: no return value
     """
 
-    def __init__(self, cd):
+    def __init__(self, cd, min_well_depth):
 
         # load data.json information into objects dictionary (= attributes of
         # the object)

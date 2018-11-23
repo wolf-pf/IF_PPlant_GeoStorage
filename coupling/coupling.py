@@ -35,24 +35,23 @@ def __main__():
 
     # create instances for power plant and storage
     geostorage = gs.geo_sto(cd)
-    well_depth = min(geostorage.well_depth)
+    min_well_depth = min(geostorage.well_depth)
 
-    powerplant = pp.model(cd, well_depth)
+    powerplant = pp.model(cd, min_well_depth)
 
 
     input_ts = read_series(cd.working_dir + cd.input_timeseries_path)
     output_ts = pd.DataFrame(columns=['pressure', 'massflow',
                                       'massflow_actual', 'power_actual',
                                       'success'])
-    #get input control file for storage simulation
+
     '''debug values from here onwards'''
-    #if tstep == 1:
-    #geostorage.InitializeStorageDefaults(r'.\testdata\testcase.storage_ctrl', self.debug)
     #data = [0.0, 0.0]
     #data = geostorage.CallStorageSimulation(1.15741, 1, cd, 'charging')
     #data = geostorage.CallStorageSimulation(0.0, 2, cd, 'shut-in')
     #data = geostorage.CallStorageSimulation(-1.15741, 3, cd, 'discharging')
     '''end of debug values'''
+
     p0 = 0.0 #old pressure (from last time step / iter)
     # get initial pressure before the time loop
     p0 = geostorage.CallStorageSimulation(0.0, 0, cd, 'init')

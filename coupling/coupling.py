@@ -150,7 +150,7 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
                 print('Adjusting power to zero! ', '\t', p0_temp, p1, m, m_corr)
 
             elif abs((m - m_corr) / m_corr) > md.flow_diff_rel:
-                power = powerplant.get_power(p1, m_corr, storage_mode)
+                power = powerplant.get_power(m_corr, p1, storage_mode)
                 tstep_accepted = True
                 print('Adjusting power to ', power, ' ! ', '\t', p0_temp, p1, m, m_corr)
 

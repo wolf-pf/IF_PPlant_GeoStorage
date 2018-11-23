@@ -1,6 +1,0 @@
-id;s;s_id;t;t_id;m;m_unit;p;p_unit;h;h_unit;T;T_unit;x;x_unit;air
-0x7f2d020fab00;fresh air;out1;compressor stage 1;in1;224.29426889863035;kg / s;1.01325;bar;414.93391062599346;kJ / kg;15.555999999999983;C;nan;nan;1
-0x7f2d020fab38;compressor stage 1;out1;intercooler;in1;224.29426889863035;kg / s;5.06625;bar;615.5042325076954;kJ / kg;213.57306606366177;C;nan;nan;1
-0x7f2d020facf8;intercooler;out1;compressor stage 2;in1;224.29426889863035;kg / s;4.9893200392084625;bar;438.7165354325557;kJ / kg;39.99999999996862;C;nan;nan;1
-0x7f2d020faeb8;compressor stage 2;out1;after cooler;in1;224.29426889863035;kg / s;80.84852977418892;bar;895.1181403923551;kJ / kg;475.99705605218105;C;nan;nan;1
-0x7f2d020fa860;after cooler;out1;cas;in1;224.29426889863035;kg / s;80.0;bar;407.7535800156859;kJ / kg;24.999999999579074;C;nan;nan;1

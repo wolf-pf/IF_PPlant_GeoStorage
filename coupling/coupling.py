@@ -52,7 +52,9 @@ def __main__():
     #data = CallStorageSimulation(-1.15741, 3, 3600, 'discharging')
     '''end of debug values'''
 
-    #for tstep in time_series.index: #what is this loop doing? Is this the main time stepping loop?
+    p0 = 0.0 #old pressure (from last time step / iter)
+    # get initial pressure before the time loop
+    p0 = geostorage.CallStorageSimulation(0.0, 0, cd.t_step_length, 'init')
 
     last_time = cd.t_start
     for t_step in range(cd.t_steps_total):
@@ -63,14 +65,6 @@ def __main__():
             last_time = current_time
         except KeyError:
             target_power = input_ts.loc[last_time].power / 100 * 1e6
-
-        p0 = 0.0
-
-        # get initial pressure (equals the pressure of the last timestep after
-        # the first iteration
-        if t_step == 0:
-            p0 = geostorage.CallStorageSimulation(
-                    0.0, 0, cd.t_step_length, 'init')
 
         # calculate pressure, mass flow and power
         p, m, m_corr, power, success = calc_timestep(
@@ -121,13 +115,14 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
     #moved inner iteration into timestep function,
     #iterate until timestep is accepted
 
-    for iter_step in range(self.max_iter): #do time-specific iterations
+    for iter_step in range(md.max_iter): #do time-specific iterations
 
         if tstep_acctpted == True:
+            print('Message: Timestep accepted after iteration ', iter_step - 1)
             break
 
         #get pressure for the given target rate and the actually achieved flow rate from storage simulation
-        p1, m_corr = geostorage.CallStorageSimulation(m, tstep ,self.tstep_length, storage_mode )
+        p1, m_corr = geostorage.CallStorageSimulation(m, tstep, md, storage_mode )
 
         if storage_mode == 'charge' or storage_mode == 'discharge':
             # pressure check
@@ -209,7 +204,7 @@ class coupling_data:
         print('Reading inputile \"' + self.scenario + '.main_ctrl.json\" '
               'in working directory \"' + self.working_dir + '\"')
 
-        if self.debug:
+'''        if self.debug:
             print('DEBUG-OUTPUT for main control data')
             print('Time series path:\t' + self.input_timeseries_path)
             print('Start time:\t' + str(self.t_start))
@@ -220,7 +215,7 @@ class coupling_data:
             print('Pressure convergence criteria:\t' +
                   str(self.pressure_diff_abs) +
                   ' bars\t' + str(self.pressure_diff_rel * 100) + ' %')
-            print('END of DEBUG-OUTPUT for main control data')
+            print('END of DEBUG-OUTPUT for main control data')'''
 
 
 __main__()

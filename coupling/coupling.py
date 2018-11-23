@@ -15,7 +15,6 @@ import json
 import datetime
 import os
 
-
 def __main__():
     """
     main function to initialise the calculation
@@ -31,12 +30,15 @@ def __main__():
     """
     
     #read main input file and set control variables, e.g. paths, identifiers, ...
-    path = (r'E:\Programming\IF_PPlant_GeoStorage\testdata\testcase.main_ctrl.json')
+    path = (r'D:\Simulations\if_testcase\testcase.main_ctrl.json')
     cd = coupling_data(path=path)
 
     # create instances for power plant and storage
-    powerplant = pp.model(cd)
     geostorage = gs.geo_sto(cd)
+    well_depth = min(geostorage.well_depth)
+
+    powerplant = pp.model(cd, well_depth)
+
 
     input_ts = read_series(cd.working_dir + cd.input_timeseries_path)
     output_ts = pd.DataFrame(columns=['pressure', 'massflow',
@@ -68,7 +70,7 @@ def __main__():
         # calculate pressure, mass flow and power
         p, m, m_corr, power, success = calc_timestep(
                 powerplant, geostorage, target_power, p0, cd, t_step)
-
+        
         # save last pressure (p1) for next time step as p0
         p0 = p
 
@@ -122,6 +124,7 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
 
         #get pressure for the given target rate and the actually achieved flow rate from storage simulation
         p1, m_corr = geostorage.CallStorageSimulation(m, tstep, md, storage_mode )
+        
 
         if storage_mode == 'charge' or storage_mode == 'discharge':
             # pressure check

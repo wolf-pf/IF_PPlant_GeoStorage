@@ -32,7 +32,7 @@ class geo_sto:
         #self.simulator = ''
         #self.simulator_path = ''
         self.working_dir_loc = wdir
-        self.simulation_title = cd.scenario
+        #self.simulation_title = cd.scenario
         self.keep_ecl_logs = bool(self.keep_ecl_logs)
         #self.restart_id = ''
         #self.well_names = []

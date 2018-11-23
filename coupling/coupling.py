@@ -129,6 +129,7 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
     p0_temp = p0
     print('######################################################################')
     print('######################################################################')
+    print('######################################################################')
     print('Advancing to timestep:\t', tstep, 'Operational mode is: ', storage_mode)
 
     for iter_step in range(md.max_iter): #do time-specific iterations
@@ -137,8 +138,10 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
         if tstep_accepted:
             print('Message: Timestep accepted after iteration ', iter_step - 1)
             break
-        
+        print('----------------------------------------------------------------------')
+        print('----------------------------------------------------------------------')
         print('Current iteration:\t', iter_step)
+        print('----------------------------------------------------------------------')
 
         #get pressure for the given target rate and the actually achieved flow rate from storage simulation
         p1, m_corr = geostorage.CallStorageSimulation(m, tstep, iter_step, md, storage_mode )
@@ -159,7 +162,7 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
             # check for difference due to pressure limitations
             elif abs(m_corr) <= 1E-5:
                 power = 0
-                tstep_accepted = True
+                tstep_accepted = True     
                 print('Adjusting power to ZERO')
                 print('m / m_corr\t\t', '%.6f'%m, '/', '%.6f'%m_corr, '[kg/s]')
                 print('p0_new / p1\t\t', '%.6f'%p0_temp, '/', '%.6f'%p1, '[bars]')
@@ -186,6 +189,8 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
         p0_temp = p1
 
     if not tstep_accepted:
+        print('----------------------------------------------------------------------')
+        print('----------------------------------------------------------------------')
         print('Problem: Results in timestep ', tstep, 'did not converge, accepting last iteration result.')
 
     return p1, m, m_corr, power, tstep_accepted

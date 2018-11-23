@@ -183,13 +183,13 @@ class geo_sto:
         '''
 
         
-        print('######################################################################')
         if not current_mode == 'init':
             print('Running storage simulation:')
             print(self.working_dir_loc + self.simulation_title + '.DATA')
             print('Timestep/iteration:\t\t', '%.0f'%tstep, '/', '%.0f'%iter_step)
             print('Timestep size:\t\t\t', tstepsize, '\t\ts')
-            print('Target storage flowrate:\t', '%.6f'%target_flowrate, '\tsm3/s')
+            print('Target storage flowrate:\t', '%.6f'%target_flowrate, '\tkg/s')
+            print('\t\t\t\t', '%.6f'%(target_flowrate / self.surface_density), '\tsm3/s')
             print('Operational mode:\t\t', current_mode)
             
         else:
@@ -209,8 +209,10 @@ class geo_sto:
         ecl_results[1] = ecl_results[1] * self.surface_density
         
         if not current_mode == 'init':
+            print('----------------------------------------------------------------------')
             print('Pressure actual:\t\t', '%.6f'%ecl_results[0], '\tbars')
-            print('Flowrate actual:\t\t', '%.6f'%ecl_results[1], '\tsm3/s')
+            print('Flowrate actual:\t\t', '%.6f'%ecl_results[1], '\tkg/s')
+            print('\t\t\t\t', '%.6f'%(ecl_results[1] / self.surface_density), '\tsm3/s')
         else:
             print('Initial pressure is: \t', '%.6f'%ecl_results[0], 'bars')
         print('----------------------------------------------------------------------')

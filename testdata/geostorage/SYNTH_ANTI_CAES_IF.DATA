@@ -80,8 +80,8 @@ FULLIMP
 MSGFILE
 1 /
 
---PARALLEL
---4 DISTRIBUTED /
+PARALLEL
+4 DISTRIBUTED /
 
 --################################################################
 GRID

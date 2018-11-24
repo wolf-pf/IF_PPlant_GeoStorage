@@ -1,0 +1,1 @@
+C:/Users/wtp/Anaconda3/python.exe ./coupling/coupling.py -h >out.txt

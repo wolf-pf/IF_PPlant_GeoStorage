@@ -7,6 +7,8 @@ __author__ = "witte, wtp"
 
 """
 
+import sys
+import getopt
 import pandas as pd
 import numpy as np
 import powerplant as pp
@@ -15,7 +17,7 @@ import json
 import datetime
 import os
 
-def __main__():
+def __main__(argv):
     """
     main function to initialise the calculation
 
@@ -30,7 +32,26 @@ def __main__():
     """
     
     #read main input file and set control variables, e.g. paths, identifiers, ...
-    path = (r'D:\Simulations\if_testcase\testcase.main_ctrl.json')
+    #path = (r'D:\Simulations\if_testcase\testcase.main_ctrl.json')
+    path = ''
+
+    try:
+        opts, args = getopt.getopt(argv,"hi:o:",["ipath="])
+    except getopt.GetoptError:
+        print('test.py -i <inputpath>')
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print('test.py -i <inputpath>')
+            sys.exit()
+        elif opt in ("-i", "--ipath"):
+            path = arg
+    print('Input file is:')
+    print(path)
+
+    print('######################################################################')
+    print('Assembling model data...')
+
     cd = coupling_data(path=path)
 
     # create instances for power plant and storage
@@ -41,6 +62,8 @@ def __main__():
 
     powerplant = pp.model(cd, min_well_depth)
 
+    print('######################################################################')
+    print('Reading input time series...')
 
     input_ts = read_series(cd.working_dir + cd.input_timeseries_path)
     output_ts = pd.DataFrame(columns=['pressure', 'massflow',
@@ -279,4 +302,7 @@ class coupling_data:
             print('END of DEBUG-OUTPUT for main control data')'''
 
 
-__main__()
+#__main__()
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

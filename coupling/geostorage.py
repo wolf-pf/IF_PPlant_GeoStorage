@@ -33,112 +33,14 @@ class geo_sto:
         #self.simulator = ''
         #self.simulator_path = ''
         self.working_dir_loc = wdir
-        #self.simulation_title = cd.scenario
-        self.keep_ecl_logs = bool(self.keep_ecl_logs)
-        #self.restart_id = ''
-        #self.well_names = []
-        #self.well_lower_BHP = []
-        #self.well_upper_BHP = []
-        #self.keep_ecl_logs = False
-        #self.debug_flag = False
+        self.keep_ecl_logs = False
 
-    #self.debug_flag = kwargs.get('DEBUG_FLAG')
-    
-    '''def set_ecl_log_flag(self, a_flag):
-        self.keep_ecl_logs = a_flag
-
-    #def set_debug_flag(self, a_flag):
-    #    self.debug_flag = a_flag
-
-    def set_path(self, a_path):
-        self.path = a_path
-    
-    def set_simulator(self, simulator):
-        self.simulator = simulator
-    
-    def set_restart_id(self, a_number):
-        self.restart_id = str(a_number)
-
-    def set_simulation_title(self, title):
-        self.simulation_title = title
-
-    def set_simulator_path(self, simulator_path):
-        self.simulator_path = simulator_path
-
-    def add_well_name(self, a_name):
-        self.well_names.append(a_name)
-    
-    def add_well_lower_BHP_val(self, value):
-        self.well_lower_BHP.append(value)
-
-    def add_well_upper_BHP_val(self, value):
-        self.well_upper_BHP.append(value)
-    
-
-    def InitializeStorageDefaults(self, path_to_ctrl, debug):
-    '''
-    '''
-        Function to set all required default data, e.g. well names, paths, ...
-
-        :param path_to_ctrl: path to input file containing control data
-        :param type: str
-        :returns: no return value
-        '''
-    '''
-        # read and clean control file
-        sto_ctrl_list = util.cleanControlFileList(util.getFile(path_to_ctrl))       
-    
-        #search for simulation data
-        #get beginning and end 
-        if util.getValuefromControlFileList(sto_ctrl_list, 'storage_simulator_data') is not 'KEY_NOT_FOUND':
-            self.set_simulator(util.getValuefromControlFileList(sto_ctrl_list, 'identifier'))
-            self.set_simulator_path(util.getValuefromControlFileList(sto_ctrl_list, 'simulator_path'))
-            self.set_simulation_title(util.getValuefromControlFileList(sto_ctrl_list, 'simulation_title'))
-            self.set_path(util.getValuefromControlFileList(sto_ctrl_list, 'simulation_path'))
-            self.set_restart_id(util.getValuefromControlFileList(sto_ctrl_list, 'restart_id'))
-            flag = util.getValuefromControlFileList(sto_ctrl_list, 'ecl_log_file')
-            if bool(flag) == True or bool(flag) == False:
-                self.set_ecl_log_flag(bool(flag))
-            else: 
-                print('Input for ecl log file not understood. Setting flag to True')
-                self.set_ecl_log_flag(True)
+        if self.retain_ecl_logs == "True":
+            self.keep_ecl_logs = True
         else:
-            print('ERROR: No storage simulator data found in file:')
-            print(path_to_ctrl)
-        
-        if util.getValuefromControlFileList(sto_ctrl_list, 'well_data') is not 'KEY_NOT_FOUND':
-            well_count_loc = util.getValuefromControlFileList(sto_ctrl_list, 'count')
-            if well_count_loc is not 'KEY_NOT_FOUND':
-                well_count_loc = int(well_count_loc)
-                
-                if util.getValuefromControlFileList(sto_ctrl_list, 'data') is not 'KEY_NOT_FOUND':
-                    start_idx = util.getIdxfromControlFileList(sto_ctrl_list, 'data')
-                    for i in range(well_count_loc):
-                        temp_list = (sto_ctrl_list[start_idx + 1 + i]).split()
-                        self.add_well_name(temp_list[0])
-                        self.add_well_lower_BHP_val(float(temp_list[1]))
-                        self.add_well_upper_BHP_val(float(temp_list[2]))
-                        #print(' Well name: ', temp_list[0], '\tBHP range: ', temp_list[1], '-', temp_list[2], ' bars')
-        else:
-            print('ERROR: No well data found in file:')
-            print(path_to_ctrl)
+            self.keep_ecl_logs = False
 
-        if  debug == True:
-            print('DEBUG-OUTPUT for storage control data')
-            print('Selected simulator:\t', self.simulator)
-            print('Simulator path:\t', self.simulator_path)
-            print('Simulation title:\t', self.simulation_title)
-            print('Simulation path:\t', self.path)
-            print('Restart ID:\t', self.restart_id)
-            print('Safe ECL log files:\t', self.keep_ecl_logs)
-            print('Number of wells:\t', str(len(self.well_names)))
-            for i in range(len(self.well_names)):
-                print('\t', self.well_names[i], ', ', self.well_lower_BHP[i], 'bars, ', self.well_upper_BHP[i], 'bars')
-            print('END of DEBUG-OUTPUT for storage control data')
-    '''
-
-
-
+    
     def CallStorageSimulation(self, target_flow, tstep, iter_step, coupling_data, op_mode):
         '''
         Entry point for geo-storage simulation, handles all data transfer, executes simulator

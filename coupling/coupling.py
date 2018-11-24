@@ -47,6 +47,8 @@ def __main__(argv):
         elif opt in ("-i", "--ipath"):
             path = arg
     print('Input file is:')
+    if path[0] == "r":
+        path = path[1:]
     print(path)
 
     print('######################################################################')
@@ -304,5 +306,5 @@ class coupling_data:
 
 #__main__()
 
-if __name__ == "__main__":
-    main(sys.argv[1:])
+#if __name__ == "__main__":
+__main__(sys.argv[1:])

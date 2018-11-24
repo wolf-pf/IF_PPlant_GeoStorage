@@ -46,9 +46,15 @@ def __main__(argv):
             sys.exit()
         elif opt in ("-i", "--ipath"):
             path = arg
-    print('Input file is:')
+
     if path[0] == "r":
         path = path[1:]
+    
+    path_log = path[:-15]
+    path_log += ".log" 
+    sys.stdout = Logger(path_log)
+
+    print('Input file is:')
     print(path)
 
     print('######################################################################')
@@ -108,6 +114,10 @@ def __main__(argv):
 
         # write pressure, mass flow and power to .csv
         output_ts.loc[current_time] = np.array([p, m, m_corr, power, success])
+
+        #Logger.flush()
+
+        #sys.stdout.flush() #force flush of output
 
         if t_step % cd.save_nth_t_step == 0:
             output_ts.to_csv(cd.working_dir + cd.output_timeseries_path)
@@ -303,8 +313,29 @@ class coupling_data:
                   ' bars\t' + str(self.pressure_diff_rel * 100) + ' %')
             print('END of DEBUG-OUTPUT for main control data')'''
 
+class Logger(object):
+
+    def __init__(self, a_string):
+        self.terminal = sys.stdout
+        self.log = open(a_string, "a")
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)  
+
+    def flush(self):
+        #this flush method is needed for python 3 compatibility.
+        #this handles the flush command by doing nothing.
+        #you might want to specify some extra behavior here.
+        #pass    
+        self.log.flush()
+
+
 
 #__main__()
+
+
+
 
 #if __name__ == "__main__":
 __main__(sys.argv[1:])

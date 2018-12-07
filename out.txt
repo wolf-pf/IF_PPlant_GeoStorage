@@ -1,2 +1,0 @@
-
-C:\Users\wtp\work\programming\IF_PPlant_GeoStorage>C:/Users/wtp/Anaconda3/python.exe ./coupling/coupling.py -h  1>out.txt 

@@ -52,6 +52,10 @@ def __main__(argv):
     
     path_log = path[:-15]
     path_log += ".log" 
+    #check if file exists and delete if necessary
+    if os.path.isfile(path_log):
+        os.remove(path_log)
+    #save screen output in file
     sys.stdout = Logger(path_log)
 
     print('Input file is:')
@@ -66,7 +70,7 @@ def __main__(argv):
     geostorage = gs.geo_sto(cd)
 
     #min_well_depth = min(geostorage.well_depths)
-    min_well_depth = 700
+    min_well_depth = 700 #read this from file later!
 
     powerplant = pp.model(cd, min_well_depth)
 
@@ -74,10 +78,18 @@ def __main__(argv):
     print('Reading input time series...')
 
     input_ts = read_series(cd.working_dir + cd.input_timeseries_path)
-    output_ts = pd.DataFrame(columns=['pressure', 'massflow',
-                                      'massflow_actual', 'power_actual',
-                                      'success'])
 
+    #prepare data structures
+    print('######################################################################')
+    print('Preparing output data structures...')
+    #one output line per timestep...
+    #print(str(cd.auto_eval_output))
+    if cd.auto_eval_output == True:
+        output_ts = pd.DataFrame(index=np.arange(0, cd.t_steps_total), columns=['time', 'power_target', 'massflow_target', 'power_actual', 'massflow_actual','storage_pressure', 'Tstep_accepted', 'delta_power', 'delta_massflow' ])
+    else:
+        output_ts = pd.DataFrame(index=np.arange(0, cd.t_steps_total),columns=['time', 'power_target', 'massflow_target', 'power_actual', 'massflow_actual', 'storage_pressure', 'Tstep_accepted' ])
+
+    #print(output_ts)
     '''debug values from here onwards'''
     #data = [0.0, 0.0]
     #data = geostorage.CallStorageSimulation(1.15741, 1, cd, 'charging')
@@ -85,9 +97,9 @@ def __main__(argv):
     #data = geostorage.CallStorageSimulation(-1.15741, 3, cd, 'discharging')
     '''end of debug values'''
 
+    print('######################################################################')
     p0 = 0.0 #old pressure (from last time step / iter)
     # get initial pressure before the time loop
-    print('######################################################################')
     p0, dummy_flow = geostorage.CallStorageSimulation(0.0, 0, 0, cd, 'init')
     print('Simulation initialzation completed.')
     print('######################################################################')
@@ -96,32 +108,39 @@ def __main__(argv):
     for t_step in range(cd.t_steps_total):
         
         current_time = datetime.timedelta(seconds=t_step * cd.t_step_length) + cd.t_start
-
+        
         try:
-            target_power = input_ts.loc[current_time].power / 100 * 1e6
+            power_target = input_ts.loc[current_time].power / 100 * 1e6
             last_time = current_time
         except KeyError:
-            target_power = input_ts.loc[last_time].power / 100 * 1e6
+            power_target = input_ts.loc[last_time].power / 100 * 1e6
 
         # calculate pressure, mass flow and power
-        p, m, m_corr, power, success = calc_timestep(
-                powerplant, geostorage, target_power, p0, cd, t_step)
+        p_actual, m_target, m_actual, power_actual, success,  = calc_timestep(
+                powerplant, geostorage, power_target, p0, cd, t_step)
         
         # save last pressure (p1) for next time step as p0
-        p0 = p
+        p0 = p_actual
         #deleting old files
         geostorage.deleteFFile(t_step)
-
+        
         # write pressure, mass flow and power to .csv
-        output_ts.loc[current_time] = np.array([p, m, m_corr, power, success])
+        if cd.auto_eval_output == True:
+            delta_power = abs(power_actual) - abs(power_target)
+            delta_massflow = abs(m_actual) - abs(m_target)
+
+            output_ts.loc[t_step] = np.array([current_time, power_target, m_target, power_actual, m_actual, 
+                                                    p_actual, success, delta_power, delta_massflow])
+        else:
+            output_ts.loc[t_step] = np.array([current_time, power_target, m_target, power_actual, m_actual, 
+                                                    p_actual, success])
 
         #Logger.flush()
 
         #sys.stdout.flush() #force flush of output
 
-        if t_step % cd.save_nth_t_step == 0:
-            output_ts.to_csv(cd.working_dir + cd.output_timeseries_path)
-
+        #if t_step % cd.save_nth_t_step == 0:
+        output_ts.to_csv(cd.working_dir + cd.output_timeseries_path, index=False)
 
 def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
     """
@@ -197,7 +216,7 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
             # check for difference due to pressure limitations
             elif abs(m_corr) <= 1E-5:
                 power = 0
-                tstep_accepted = True     
+                tstep_accepted = True
                 print('Adjusting power to ZERO')
                 print('m / m_corr\t\t', '%.6f'%m, '/', '%.6f'%m_corr, '[kg/s]')
                 print('p0_new / p1\t\t', '%.6f'%p0_temp, '/', '%.6f'%p1, '[bars]')
@@ -261,6 +280,10 @@ class coupling_data:
         with open(path) as f:
             self.__dict__.update(json.load(f))
 
+        self.auto_eval_output = False
+
+        if self.eval_output == "True":
+            self.auto_eval_output = True
 
         self.coupled_simulation()
 

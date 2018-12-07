@@ -13,5 +13,6 @@
 	"pressure_diff_abs": 0.01,
 	"flow_diff_rel": 0.01,
 	"flow_diff_abs": 0.01,
-	"debug": "True"
+	"debug": "True",
+	"eval_output": "True"
 }

@@ -82,12 +82,13 @@ def __main__(argv):
     #prepare data structures
     print('######################################################################')
     print('Preparing output data structures...')
-    #one output line per timestep...
-    #print(str(cd.auto_eval_output))
+    variable_list = []
     if cd.auto_eval_output == True:
-        output_ts = pd.DataFrame(index=np.arange(0, cd.t_steps_total), columns=['time', 'power_target', 'massflow_target', 'power_actual', 'massflow_actual','storage_pressure', 'Tstep_accepted', 'delta_power', 'delta_massflow' ])
+        variable_list = ['time', 'power_target', 'massflow_target', 'power_actual', 'massflow_actual','storage_pressure', 'Tstep_accepted', 'delta_power', 'delta_massflow' ]
     else:
-        output_ts = pd.DataFrame(index=np.arange(0, cd.t_steps_total),columns=['time', 'power_target', 'massflow_target', 'power_actual', 'massflow_actual', 'storage_pressure', 'Tstep_accepted' ])
+        variable_list = ['time', 'power_target', 'massflow_target', 'power_actual', 'massflow_actual', 'storage_pressure' ]
+    #one output line per timestep...
+    output_ts = pd.DataFrame(index=np.arange(0, cd.t_steps_total),columns=variable_list)
 
     #print(output_ts)
     '''debug values from here onwards'''
@@ -133,7 +134,7 @@ def __main__(argv):
                                                     p_actual, success, delta_power, delta_massflow])
         else:
             output_ts.loc[t_step] = np.array([current_time, power_target, m_target, power_actual, m_actual, 
-                                                    p_actual, success])
+                                                    p_actual])
 
         #Logger.flush()
 

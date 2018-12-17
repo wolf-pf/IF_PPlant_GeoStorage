@@ -99,12 +99,24 @@ class model:
                     self.tespy_charge.solve(mode='offdesign',
                                             init_file=init_file,
                                             design_file=init_file)
+                    if self.tespy_charge.res[-1] > 1e-3:
+                        print('ERROR: Could not find a solution for input pair: '
+                              'power=' + str(power) + ' pressure=' + str(pressure))
+                        return 0
+                    elif self.cas_charge.m.val_SI < self.massflow_min_rel * self.massflow_charge_max:
+                        print('ERROR: massflow for input pair '
+                              'power=' + str(power) + ' pressure=' + str(pressure) + ' below minimum massflow.')
+                        return 0
+                    elif self.cas_charge.m.val_SI > self.massflow_charge_max:
+                        print('ERROR: massflow for input pair '
+                              'power=' + str(power) + ' pressure=' + str(pressure) + ' above maximum massflow.')
+                        return 0
+                    else:
+                        return self.cas_charge.m.val_SI
                 except:
                     print('ERROR: Could not find a solution for input pair: '
                           'power=' + str(power) + ' pressure=' + str(pressure))
                     return 0
-
-                return self.cas_charge.m.val_SI
 
             elif mode == 'discharging':
                 init_file = self.tespy_discharge_path + '/results.csv'
@@ -126,12 +138,24 @@ class model:
                     self.tespy_discharge.solve(mode='offdesign',
                                                init_file=init_file,
                                                design_file=init_file)
+                    if self.tespy_discharge.res[-1] > 1e-3:
+                        print('ERROR: Could not find a solution for input pair: '
+                              'power=' + str(power) + ' pressure=' + str(pressure))
+                        return 0
+                    elif self.cas_discharge.m.val_SI < self.massflow_min_rel * self.massflow_discharge_max:
+                        print('ERROR: massflow for input pair '
+                              'power=' + str(power) + ' pressure=' + str(pressure) + ' below minimum massflow.')
+                        return 0
+                    elif self.cas_discharge.m.val_SI > self.massflow_discharge_max:
+                        print('ERROR: massflow for input pair '
+                              'power=' + str(power) + ' pressure=' + str(pressure) + ' above maximum massflow.')
+                        return 0
+                    else:
+                        return self.cas_discharge.m.val_SI
                 except:
                     print('ERROR: Could not find a solution for input pair: '
                           'power=' + str(power) + ' pressure=' + str(pressure))
                     return 0
-
-                return self.cas_discharge.m.val_SI
 
             else:
                 raise ValueError('Mode must be charging or discharging.')

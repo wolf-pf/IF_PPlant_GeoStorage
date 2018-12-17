@@ -1,3 +1,2 @@
 id;label;P;P_set
-0x7f2d1175c898;input power;110000000.0;True
-0x7f2d02080908;heat output;-110774384.39794737;False
+0x7fb29df9ac18;input power;110000000.00000001;True

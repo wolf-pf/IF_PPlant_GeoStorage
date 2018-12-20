@@ -73,11 +73,11 @@ class model:
         if pressure + 1e-4 < self.pressure_min:
             print('ERROR: Pressure is below minimum pressure: '
                   'min=' + str(self.pressure_min) + 'value=' + str(pressure))
-            return 0
+            return 0, 0
         if pressure - 1e-4 > self.pressure_max:
             print('ERROR: Pressure is above maximum pressure: '
                   'max=' + str(self.pressure_max) + 'value=' + str(pressure))
-            return 0
+            return 0, 0
 
         if self.method == 'tespy':
             if mode == 'charging':
@@ -102,21 +102,22 @@ class model:
                     if self.tespy_charge.res[-1] > 1e-3:
                         print('ERROR: Could not find a solution for input pair: '
                               'power=' + str(power) + ' pressure=' + str(pressure))
-                        return 0
+                        return 0, 0
                     elif self.cas_charge.m.val_SI < self.massflow_min_rel * self.massflow_charge_max:
                         print('ERROR: massflow for input pair '
                               'power=' + str(power) + ' pressure=' + str(pressure) + ' below minimum massflow.')
-                        return 0
+                        return 0, 0
                     elif self.cas_charge.m.val_SI > self.massflow_charge_max:
-                        print('ERROR: massflow for input pair '
-                              'power=' + str(power) + ' pressure=' + str(pressure) + ' above maximum massflow.')
-                        return 0
+                        print('INFO: massflow for input pair '
+                              'power=' + str(power) + ' pressure=' + str(pressure) + ' above maximum massflow. '
+                              'Adjusting power to match maximum allowed massflow.')
+                        return self.massflow_charge_max, self.get_power(self.massflow_charge_max, pressure, mode)
                     else:
-                        return self.cas_charge.m.val_SI
+                        return self.cas_charge.m.val_SI, power
                 except:
                     print('ERROR: Could not find a solution for input pair: '
                           'power=' + str(power) + ' pressure=' + str(pressure))
-                    return 0
+                    return 0, 0
 
             elif mode == 'discharging':
                 init_file = self.tespy_discharge_path + '/results.csv'
@@ -141,15 +142,15 @@ class model:
                     if self.tespy_discharge.res[-1] > 1e-3:
                         print('ERROR: Could not find a solution for input pair: '
                               'power=' + str(power) + ' pressure=' + str(pressure))
-                        return 0
+                        return 0, 0
                     elif self.cas_discharge.m.val_SI < self.massflow_min_rel * self.massflow_discharge_max:
                         print('ERROR: massflow for input pair '
                               'power=' + str(power) + ' pressure=' + str(pressure) + ' below minimum massflow.')
-                        return 0
+                        return 0, 0
                     elif self.cas_discharge.m.val_SI > self.massflow_discharge_max:
                         print('ERROR: massflow for input pair '
                               'power=' + str(power) + ' pressure=' + str(pressure) + ' above maximum massflow.')
-                        return 0
+                        return self.massflow_discharge_max, self.get_power(self.massflow_discharge_max, pressure, mode)
                     else:
                         return self.cas_discharge.m.val_SI
                 except:
@@ -210,16 +211,16 @@ class model:
             if mode == 'charging':
                 m_min = self.massflow_min_rel * self.massflow_charge_max
                 m_max = self.massflow_charge_max
-                if massflow < m_min:
+                if massflow < m_min - 1e-4 :
                     print('ERROR: Massflow is below minimum massflow: '
                           'min=' + str(m_min) +
                           'value=' + str(massflow))
                     return 0
-                if massflow > m_max:
+                if massflow > m_max + 1e-4:
                     print('ERROR: Massflow is above maximum massflow: '
                           'max=' + str(m_max) +
                           'value=' + str(massflow))
-                    return 0
+                    return self.get_power(m_max, pressure, mode)
 
                 init_file = self.tespy_charge_path + '/results.csv'
                 self.tespy_charge.busses[0].set_attr(P=np.nan)
@@ -244,16 +245,16 @@ class model:
             elif mode == 'discharging':
                 m_min = self.massflow_min_rel * self.massflow_discharge_max
                 m_max = self.massflow_discharge_max
-                if massflow < m_min:
+                if massflow < m_min - 1e-4:
                     print('ERROR: Massflow is below minimum massflow: '
                           'min=' + str(m_min) +
                           'value=' + str(massflow))
                     return 0
-                if massflow > m_max:
+                if massflow > m_max + 1e-4:
                     print('ERROR: Massflow is above maximum massflow: '
                           'max=' + str(m_max) +
                           'value=' + str(massflow))
-                    return 0
+                    return self.get_power(m_max, pressure, mode)
 
                 init_file = self.tespy_discharge_path + '/results.csv'
                 self.tespy_discharge.busses[0].set_attr(P=np.nan)

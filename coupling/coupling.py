@@ -30,7 +30,7 @@ def __main__(argv):
     :type md: model_data object
     :returns: no return value
     """
-    
+
     #read main input file and set control variables, e.g. paths, identifiers, ...
     #path = (r'D:\Simulations\if_testcase\testcase.main_ctrl.json')
     path = ''
@@ -49,9 +49,9 @@ def __main__(argv):
 
     if path[0] == "r":
         path = path[1:]
-    
+
     path_log = path[:-15]
-    path_log += ".log" 
+    path_log += ".log"
     #check if file exists and delete if necessary
     if os.path.isfile(path_log):
         os.remove(path_log)
@@ -107,9 +107,9 @@ def __main__(argv):
 
     last_time = cd.t_start
     for t_step in range(cd.t_steps_total):
-        
+
         current_time = datetime.timedelta(seconds=t_step * cd.t_step_length) + cd.t_start
-        
+
         try:
             power_target = input_ts.loc[current_time].power / 100 * 1e6
             last_time = current_time
@@ -119,21 +119,21 @@ def __main__(argv):
         # calculate pressure, mass flow and power
         p_actual, m_target, m_actual, power_actual, success,  = calc_timestep(
                 powerplant, geostorage, power_target, p0, cd, t_step)
-        
+
         # save last pressure (p1) for next time step as p0
         p0 = p_actual
         #deleting old files
         geostorage.deleteFFile(t_step)
-        
+
         # write pressure, mass flow and power to .csv
         if cd.auto_eval_output == True:
             delta_power = abs(power_actual) - abs(power_target)
             delta_massflow = abs(m_actual) - abs(m_target)
 
-            output_ts.loc[t_step] = np.array([current_time, power_target, m_target, power_actual, m_actual, 
+            output_ts.loc[t_step] = np.array([current_time, power_target, m_target, power_actual, m_actual,
                                                     p_actual, success, delta_power, delta_massflow])
         else:
-            output_ts.loc[t_step] = np.array([current_time, power_target, m_target, power_actual, m_actual, 
+            output_ts.loc[t_step] = np.array([current_time, power_target, m_target, power_actual, m_actual,
                                                     p_actual])
 
         #Logger.flush()
@@ -170,10 +170,10 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
         storage_mode = 'shut-in'
     elif power < 0:
         storage_mode = 'discharging'
-        m = powerplant.get_mass_flow(power, p0, storage_mode)
+        m, power = powerplant.get_mass_flow(power, p0, storage_mode)
     else:
         storage_mode = 'charging'
-        m = powerplant.get_mass_flow(power, p0, storage_mode)
+        m, power = powerplant.get_mass_flow(power, p0, storage_mode)
 
     if m == 0:
         storage_mode = "shut-in"
@@ -188,7 +188,7 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
     print('Advancing to timestep:\t', tstep, 'Operational mode is: ', storage_mode)
 
     for iter_step in range(md.max_iter): #do time-specific iterations
-       
+
 
         if tstep_accepted:
             print('Message: Timestep accepted after iteration ', iter_step - 1)
@@ -200,12 +200,12 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
 
         #get pressure for the given target rate and the actually achieved flow rate from storage simulation
         p1, m_corr = geostorage.CallStorageSimulation(m, tstep, iter_step, md, storage_mode )
-        
+
 
         if storage_mode == 'charging' or storage_mode == 'discharging':
             # pressure check
             if abs((p0_temp - p1) / p1) > md.pressure_diff_rel or abs((p0_temp- p1)) > md.pressure_diff_abs:
-                m = powerplant.get_mass_flow(power, p1, storage_mode)
+                m, power = powerplant.get_mass_flow(power, p1, storage_mode)
                 print('Adjusting mass flow rate.')
                 print('m / m_corr\t\t', '%.6f'%m, '/', '%.6f'%m_corr, '[kg/s]')
                 print('p0_new / p1\t\t', '%.6f'%p0_temp, '/', '%.6f'%p1, '[bars]')
@@ -345,14 +345,14 @@ class Logger(object):
 
     def write(self, message):
         self.terminal.write(message)
-        self.log.write(message)  
+        self.log.write(message)
 
     def flush(self):
         #this flush method is needed for python 3 compatibility.
         #this handles the flush command by doing nothing.
         #you might want to specify some extra behavior here.
-        pass    
-        
+        pass
+
 
 
 

@@ -2,6 +2,11 @@
 Documentation of the Power Plant Geostorage Interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. contents::
+    :depth: 1
+    :local:
+    :backlinks: top
+
 With the Power Plant Geostorage Interface it is possible to couple the simulation of storage and power plant operation.
 The interface provides a data exchange between the sotrage and the power plant model and allows to utilize different simulations models.
 
@@ -83,7 +88,8 @@ The following sections will introduce the different modeling approaches and outl
 TESPy model
 +++++++++++
 
-TESPy is a modular and component based power plant design and simulation software.
+TESPy (Thermal Engineering Systems in Python) is a modular and component based power plant design and simulation software. The Software is designed to simulate stationary operation of power plants, heat pumps or similar applications.
+
 
 Proxy model
 +++++++++++

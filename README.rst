@@ -54,11 +54,13 @@ Input data
 Output data
 +++++++++++
 
-Output:
-    • Anlagenmodell
-        ◦ Übersetzung: Druck im Speicher, Leistung → Massenstrom
-    • Speichermodell
-        ◦ Berechnung der Druckverteilung im geologischen Speicher, vorgegebene Massenstromrate/Volumenstromrate OK? Es wird ein Druck zurückgegeben.
+- output time series
+
+	- timestamp
+	- power
+	- pressure
+	- mass flow rate
+	- temperature at boreholen (optional)
 
 Geological Storage Module
 -------------------------

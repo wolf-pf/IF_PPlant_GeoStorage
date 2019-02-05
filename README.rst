@@ -68,11 +68,25 @@ Geological Storage Module
 Power Plant Module
 ------------------
 
+The power plant module handles the power plant simulation. There are two main functions of the power plant module:
+
+- Calculate the mass flow pressed into or extracted from the storage for a given pressure level at the bottom of the borehole and power input, output respectively.
+- Calculate the power input (output respectively) at given mass flow and pressure level. This function is required, if the scheduled power can not be reached due to restrictions of the storage or the power plant.
+
+For this purpose a power plant model is set up containing the components of the power plant, e. g. compressors, turbines (turbine stages), heat exchangers, control valves and piping. There are two different ways to provide the power plant model at the moment:
+
+- Using a TESPy model or
+- using lookup tables for the proxy approach.
+
+The following sections will introduce the different modeling approaches and outline the strenghts and weaknesses.
+
 TESPy model
-^^^^^^^^^^^
++++++++++++
+
+TESPy is a modular and component based power plant design and simulation software.
 
 Proxy model
-^^^^^^^^^^^
++++++++++++
 
 Software tests
 --------------

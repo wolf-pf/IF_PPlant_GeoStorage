@@ -1,8 +1,0 @@
-id;s;s_id;t;t_id;m;m_unit;p;p_unit;h;h_unit;T;T_unit;x;x_unit;air
-0x7fb29e012fd0;fresh air;out1;compressor stage 1;in1;62.05310368727996;kg / s;1.01325;bar;414.93391062599346;kJ / kg;15.555999999999983;C;nan;nan;1
-0x7fb29e012e10;compressor stage 1;out1;intercooler;in1;62.053103687279965;kg / s;5.06625;bar;645.4073465533617;kJ / kg;242.54769477616037;C;nan;nan;1
-0x7fb29df9a358;intercooler;out1;compressor stage 2;in1;62.05310368727996;kg / s;5.060153210576456;bar;438.7020224612703;kJ / kg;39.99999999997442;C;nan;nan;1
-0x7fb29df9a518;compressor stage 2;out1;after cooler;in1;62.053103687279965;kg / s;80.11025312553315;bar;956.8515691098057;kJ / kg;531.8376577056005;C;nan;nan;1
-0x7fb29df9a6d8;after cooler;out1;power plant outlet;in1;62.05310368727996;kg / s;80.04031729929453;bar;407.74586155425243;kJ / kg;24.99999999973977;C;nan;nan;1
-0x7fb29df9a898;power plant outlet source;out1;pipe;in1;6.8947892985866615;kg / s;80.04031729929453;bar;407.74586155425243;kJ / kg;24.99999999973977;C;nan;nan;1
-0x7fb29df9aa58;pipe;out1;cas;in1;6.894789298586662;kg / s;80.0;bar;407.74586155425243;kJ / kg;24.993195529438594;C;nan;nan;1

@@ -91,10 +91,23 @@ TESPy model
 
 TESPy (Thermal Engineering Systems in Python) is a modular and component based power plant design and simulation software.
 The Software is designed to simulate stationary operation of power plants, district heating systems, heat pumps or similar applications.
+
 By connecting different components with each other a network is created, which can be represented by a system nonlinear of equations.
-As TESPy is a equation-based approach, the system of equations is influenced by parameter specification of the user, too.
+As TESPy is a equation-based approach, the system of equations is additionally influenced by parameter specification of the user.
+In order to calculate the stationary operation of the plant, the fluid properties and the fluid composition of all connections between the components of the network has to be identified.
+Thus, the system's variables are: mass flow, pressure, enthalpy and mass fraction of the fluid components. Component parameters can optionally be used as additional variables of the system, e. g. for the layout of a pipe diameter.
+In order to numerically solve the system of equations, TESPy uses the multi dimensonal Newton–Raphson method.
 
+The value of the system variables is calculated accoring to equation (0.0) in every iteration i:
 
+.. math::
+	\vec{x}_{i+1}=\vec{x}_i-J\left(\vec{x}_i\right)^{-1}\cdot f\left(\vec{x}_i\right)
+
+Therefor, the calculation of the residual values of the equations :math:`f\left(\vec{x}_i\right)` as well as the calculation of the inversed jacobian matrix :math:`J\left(\vec{x}_i\right)` is required.
+The algorithm is terminated, if the magnitude of the equations (vector norm :math:`||f\left(\vec{x}_i\right)||`) is smaller than a specified residual value:
+
+.. math::
+	||f(\vec{x}_i)|| > \epsilon
 
 Plant layout
 ^^^^^^^^^^^^

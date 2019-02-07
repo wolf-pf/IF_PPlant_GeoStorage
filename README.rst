@@ -2,6 +2,11 @@
 Documentation of the Power Plant Geostorage Interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. contents::
+    :depth: 1
+    :local:
+    :backlinks: top
+
 With the Power Plant Geostorage Interface it is possible to couple the simulation of storage and power plant operation.
 The interface provides a data exchange between the sotrage and the power plant model and allows to utilize different simulations models.
 
@@ -70,23 +75,38 @@ Power Plant Module
 
 The power plant module handles the power plant simulation. There are two main functions of the power plant module:
 
-- Calculate the mass flow pressed into or extracted from the storage for a given pressure level at the bottom of the borehole and power input, output respectively.
-- Calculate the power input (output respectively) at given mass flow and pressure level. This function is required, if the scheduled power can not be reached due to restrictions of the storage or the power plant.
+- Calculate the mass flow pressed into or extracted from the storage for a given pressure level at the bottom of the borehole and given power input or output respectively.
+- Calculate the power input (or output) at given mass flow and given pressure level. This function is e. g. required, if the scheduled power can not be reached due to restrictions of the storage or the power plant.
 
-For this purpose a power plant model is set up containing the components of the power plant, e. g. compressors, turbines (turbine stages), heat exchangers, control valves and piping. There are two different ways to provide the power plant model at the moment:
+For this purpose a power plant model is based on single components, e. g. compressors, turbines (turbine stages), heat exchangers, control valves or piping, is set up.
+The interface implementation supports two different approaches for calculation of interface functionalities as mentioned above:
 
-- Using a TESPy model or
-- using lookup tables for the proxy approach.
+- Importing a TESPy power plant model or
+- using a two dimensional lookup table linking the three quantities (mass flow, pressure level and power) as well as an inverse function.
 
-The following sections will introduce the different modeling approaches and outline the strenghts and weaknesses.
+The following sections will introduce the different modeling approaches and outline their strenghts and weaknesses.
 
 TESPy model
 +++++++++++
 
-TESPy is a modular and component based power plant design and simulation software.
+TESPy (Thermal Engineering Systems in Python) is a modular and component based power plant design and simulation software.
+The Software is designed to simulate stationary operation of power plants, district heating systems, heat pumps or similar applications.
+By connecting different components with each other a network is created, which can be represented by a system nonlinear of equations.
+As TESPy is a equation-based approach, the system of equations is influenced by parameter specification of the user, too.
+
+
+
+Plant layout
+^^^^^^^^^^^^
+
+Offdesign operation
+^^^^^^^^^^^^^^^^^^^
 
 Proxy model
 +++++++++++
+
+The main reason for implementing a proxy model in the interface is reduction of calculation time. The proxy model is a two dimensional lookup table,
+linking the key figures of the compressed air energy storage to each other.
 
 Software tests
 --------------

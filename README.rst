@@ -101,19 +101,21 @@ In order to numerically solve the system of equations, TESPy uses the multi dime
 The value of the system variables is calculated accoring to equation (0.0) in every iteration i:
 
 .. math::
+
 	\vec{x}_{i+1}=\vec{x}_i-J\left(\vec{x}_i\right)^{-1}\cdot f\left(\vec{x}_i\right)
 
 Therefor, the calculation of the residual values of the equations :math:`f\left(\vec{x}_i\right)` as well as the calculation of the inversed jacobian matrix :math:`J\left(\vec{x}_i\right)` is required.
 The algorithm is terminated, if the magnitude of the equations (vector norm :math:`||f\left(\vec{x}_i\right)||`) is smaller than a specified residual value:
 
 .. math::
+
 	||f(\vec{x}_i)|| > \epsilon
-
-Plant layout
-^^^^^^^^^^^^
-
-Offdesign operation
-^^^^^^^^^^^^^^^^^^^
+	
+[1] provides further detailed information on TESPy.
+	
+For the interface, the power plant model is loaded with the tespy.network_reader-module, allowing to load the plant's topology and parametrisation as tabular data (from .csv-format).
+After loading the network it is still possible to change parameters (e. g. the depth of the wells) provided in the general interface parameter settings.
+Based on these settings a plant design calculation will be performed. The offdesign operation will reference this design point.
 
 Proxy model
 +++++++++++
@@ -123,3 +125,9 @@ linking the key figures of the compressed air energy storage to each other.
 
 Software tests
 --------------
+
+Literature
+----------
+Francesco Witte. (2019, February 2). Thermal Engineering Systems in Python (Version latest). Zenodo.
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.2555867.svg
+   :target: https://doi.org/10.5281/zenodo.2555867

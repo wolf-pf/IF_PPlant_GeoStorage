@@ -117,6 +117,18 @@ For the interface, the power plant model is loaded with the tespy.network_reader
 After loading the network it is still possible to change parameters (e. g. the depth of the wells) provided in the general interface parameter settings.
 Based on these settings a plant design calculation will be performed. The offdesign operation will reference this design point.
 
+Calculation of mass flow
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The mass flow is calulated with the TESPy-model by setting the electrical power input for the motor (power output for discharging respectively) to the target value from the input time series as well as the
+pressure level at the bottom borehole, which is retrieved by the geological storage simulation. All other parameters of the model, like ambient temperature, intermediate cooling temperatures or
+pressure levels in the compressor stages (turbine stages respectively) remain untouched. Thus, only the interface parameters are adjusted. After specifying the parameters, the TESPy model is solved in offdesign mode.
+Finally, the results (mass flow and actual power) are returned.
+
+Calculation of power
+^^^^^^^^^^^^^^^^^^^^
+
+
 Proxy model
 +++++++++++
 

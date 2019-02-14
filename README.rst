@@ -129,5 +129,6 @@ Software tests
 Literature
 ----------
 Francesco Witte. (2019, February 2). Thermal Engineering Systems in Python (Version latest). Zenodo.
+
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.2555867.svg
    :target: https://doi.org/10.5281/zenodo.2555867

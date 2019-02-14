@@ -20,11 +20,20 @@ from tespy import nwkr
 
 class model:
     """
-    creates a model of a power plant
+    Creates the model for the power plant. Parameters are loaded from
+    coupling data object cd.
 
-    :param path: path to power plant: data.json
-    :type path: str
-    :returns: no return value
+    Parameters
+    ----------
+    cd : coupling_data
+        Generel data for the interface handling.
+
+    min_well_depth : float
+        Depth of the wells.
+
+    Example
+    -------
+    >>> print('Place some example code here.')
     """
 
     def __init__(self, cd, min_well_depth):

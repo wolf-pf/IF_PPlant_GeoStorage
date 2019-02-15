@@ -114,16 +114,30 @@ The algorithm is terminated, if the magnitude of the equations (vector norm :mat
 [1] provides further detailed information on TESPy.
 	
 For the interface, the power plant model is loaded with the tespy.network_reader-module, allowing to load the plant's topology and parametrisation as tabular data (from .csv-format).
-After loading the network it is still possible to change parameters (e. g. the depth of the wells) provided in the general interface parameter settings.
-Based on these settings a plant design calculation will be performed. The offdesign operation will reference this design point.
+After loading the plant model it is still possible to change the following parameters:
+
+- depth of the wells :math:`L_{wells}` and number of wells :math:`n_{wells}`, as well as minimum and maximum pressure at the bottom of bore holes :math:`p_{min}`, :math:`p_{max}` provided by the geostorage model controle files.
+- the nominal power, nominal pressure at bottom of the bore hole, maximum and minimum (relative) mass flow (in regard to mass flow at nominal power and pressure) provided by the powerplant model control files.
+
+Based on these settings a plant design layout will be performed. All further operation will then reference this design point.
+After the plant's design, the bottom bore hole pressure, the mass flow and the total power input/output are be the only exchangable parameters.
+The calculation of the interface parameters mass flow and power will be outlined in the following sections.
 
 Calculation of mass flow
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The mass flow is calulated with the TESPy-model by setting the electrical power input for the motor (power output for discharging respectively) to the target value from the input time series as well as the
-pressure level at the bottom borehole, which is retrieved by the geological storage simulation. All other parameters of the model, like ambient temperature, intermediate cooling temperatures or
-pressure levels in the compressor stages (turbine stages respectively) remain untouched. Thus, only the interface parameters are adjusted. After specifying the parameters, the TESPy model is solved in offdesign mode.
-Finally, the results (mass flow and actual power) are returned.
+The mass flow is calculated as a function of borehole pressure and electrical power: The electrical power input of the motor (power output of generator for discharging mode) is set to the target value from the input time series.
+The pressure level at the bottom bore hole is retrieved by the geological storage simulation. Also, if the mass flow rate was specified in a prior calculation it will be unset for this case.
+Following, TESPy will solve the plant model, whereby different outcomes are possible (see table ...).
+
+case;description;returned mass flow;returned power
+success;TESPy solver found feasible solution;mass flow;target power
+p < p_min or p > p_max;pressure out of pressure limits;0;0
+power < nominal power / 100;power input/output too small;0;0
+residual > 1e-3;no feasible solution for steady state was found by solver;0;0
+mass flow < minimum mass flow;mass flow too low for plant operation;0;0
+mass flow > maximum mass flow;mass flow higher than possible;mass flow max;power(mass flow max, pressure)
+general error;;0;0
 
 Calculation of power
 ^^^^^^^^^^^^^^^^^^^^

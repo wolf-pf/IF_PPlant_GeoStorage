@@ -12,8 +12,9 @@ import pandas as pd
 import numpy as np
 import json
 from scipy import interpolate
+import logging
 
-from tespy import nwkr
+from tespy import nwkr, logger
 
 # %% power plant model class
 
@@ -31,34 +32,86 @@ class model:
     min_well_depth : float
         Depth of the wells.
 
+    num_wells : int
+        Number of wells.
+
+    p_max : float
+        Maximum pressure limit.
+
+    p_min : float
+        Minimum pressure limit.
+
+    Note
+    ----
+    The depth of the wells along with the number of wells determines the
+    dynamic pressure loss in bore hole pipes connecting the power plant with
+    the geological storage. The pressure limits are the pressure limits at the
+    bottom of the bore holes. These inforamtion are provided in
+    the geological storage model control file.
+
     Example
     -------
     >>> from coupling import cp, pp
     """
 
-    def __init__(self, cd, min_well_depth):
+    def __init__(self, cd, min_well_depth, num_wells, p_max, p_min):
 
         # load data.json information into objects dictionary (= attributes of
         # the object)
-        path = (cd.working_dir + cd.powerplant_path + cd.scenario +
-                '.powerplant_ctrl.json')
-        wdir = cd.working_dir + cd.powerplant_path
+
+        # well information
+        self.min_well_depth = min_well_depth
+        self.num_wells = num_wells
+
+        # pressure limits
+        self.p_max = p_max
+        self.p_min = p_min
+
+        path = (cd.working_dir + cd.powerplant_path + cd.scenario + '.powerplant_ctrl.json')
+        self.wdir = cd.working_dir + cd.powerplant_path
         with open(path) as f:
             self.__dict__.update(json.load(f))
 
-        self.tespy_charge_path = wdir + self.tespy_charge_path
-        self.tespy_discharge_path = wdir + self.tespy_discharge_path
+        # setting paths to lookup tables
         self.spline_charge_path = wdir + self.spline_charge_path
         self.spline_discharge_path = wdir + self.spline_discharge_path
+
         # load tespy models with the network_reader module
-        self.tespy_charge = nwkr.load_nwk(self.tespy_charge_path)
-        self.tespy_charge.set_printoptions(print_level='err')
-        self.tespy_discharge = nwkr.load_nwk(self.tespy_discharge_path)
-        self.tespy_discharge.set_printoptions(print_level='err')
+        self.tespy_charge = nwkr.load_nwk(wdir + self.tespy_charge_path)
+        self.tespy_charge.set_printoptions(print_level='none')
+        self.tespy_discharge = nwkr.load_nwk(wdir + self.tespy_discharge_path)
+        self.tespy_discharge.set_printoptions(print_level='none')
+
+        self.power_plant_layout()
 
         # load splines from .csv data
         self.spline_charge = self.load_lookup(self.spline_charge_path)
         self.spline_discharge = self.load_lookup(self.spline_discharge_path)
+
+    def power_plant_layout(self):
+        """
+        Power plant layout calculation to determine power plant design point using
+        nominal power input/output and nominal pressure as inputs.
+        """
+        # charging
+        self.tespy_charge.imp_busses[self.power_bus_charge].set_attr(P=self.power_nominal_charge)
+        self.tespy_charge.imp_conns[self.storage_connection_charge].set_attr(p=self.p_nom, m=np.nan)
+        self.tespy_charge.imp_comps[self.pipe].set_attr(L=self.min_well_depth)
+        self.tespy_charge.solve('design')
+        self.tespy_charge.save(self.wdir + 'charge_design')
+        m = self.tespy_charge.imp_conns[self.storage_connection_charge].m.val_SI
+        msg = 'Nominal mass flow for charging is ' + str(m) + ' at nominal power ' + str(self.power_nominal_charge) + ' and nominal pressure ' + str(self.p_nom) + '.'
+        logging.info(msg)
+
+        # discharging
+        self.tespy_discharge.imp_busses[self.power_bus_discharge].set_attr(P=self.power_nominal_discharge)
+        self.tespy_discharge.imp_conns[self.storage_connection_discharge].set_attr(p=self.p_nom, m=np.nan)
+        self.tespy_charge.imp_comps[self.pipe].set_attr(L=self.min_well_depth)
+        self.tespy_discharge.solve('design')
+        self.tespy_charge.save(self.wdir + 'discharge_design')
+        m = self.tespy_discharge.imp_conns[self.storage_connection_discharge].m.val_SI
+        msg = 'Nominal mass flow for discharging is ' + str(m) + ' at nominal power ' + str(self.power_nominal_discharge) + ' and nominal pressure ' + str(self.p_nom) + '.'
+        logging.info(msg)
 
     def get_mass_flow(self, power, pressure, mode):
         """
@@ -88,60 +141,56 @@ class model:
             Actual electrical power input/output of the power plant.
             Differs from scheduled power, if schedule can not be met.
          """
-
-        if pressure + 1e-4 < self.pressure_min:
-            print('ERROR: Pressure is below minimum pressure: '
-                  'min=' + str(self.pressure_min) + 'value=' + str(pressure))
+        if pressure + 1e-4 < self.p_min:
+            logging.error('Pressure is below minimum pressure: min=' + str(self.p_min) + 'value=' + str(pressure) + '.')
             return 0, 0
-        if pressure - 1e-4 > self.pressure_max:
-            print('ERROR: Pressure is above maximum pressure: '
-                  'max=' + str(self.pressure_max) + 'value=' + str(pressure))
+        if pressure - 1e-4 > self.p_max:
+            logging.error('Pressure is above maximum pressure: max=' + str(self.p_max) + 'value=' + str(pressure) + '.')
             return 0, 0
 
         if self.method == 'tespy':
             if mode == 'charging':
-                init_path = self.tespy_charge_path
-                design_path = self.tespy_charge_path
+                # if power too small
+                if abs(power) < abs(self.power_nominal_charge / 100):
+                    return 0, 0
+
+                design_path = self.wdir + 'charge_design'
                 # set power of bus
                 self.tespy_charge.imp_busses[self.power_bus_charge].set_attr(P=power)
                 # set pressure at interface
                 self.tespy_charge.imp_conns[self.storage_connection_charge].set_attr(p=pressure, m=np.nan)
+
                 try:
-                    self.tespy_charge.solve(mode='offdesign',
-                                            init_file=init_path,
-                                            design_file=design_path)
+                    self.tespy_charge.solve(mode='offdesign', design_path=design_path)
                     if self.tespy_charge.res[-1] > 1e-3:
-                        print('ERROR: Could not find a solution for input pair: '
-                              'power=' + str(power) + ' pressure=' + str(pressure))
+                        logging.error('Could not find a solution for input pair power=' + str(power) + ' pressure=' + str(pressure) + '.')
                         return 0, 0
                     elif self.cas_charge.m.val_SI < self.massflow_min_rel * self.massflow_charge_max:
-                        print('ERROR: massflow for input pair '
-                              'power=' + str(power) + ' pressure=' + str(pressure) + ' below minimum massflow.')
+                        logging.error('Mass flow for input pair power=' + str(power) + ' pressure=' + str(pressure) + ' below minimum mass flow.')
                         return 0, 0
                     elif self.cas_charge.m.val_SI > self.massflow_charge_max:
-                        print('INFO: massflow for input pair '
-                              'power=' + str(power) + ' pressure=' + str(pressure) + ' above maximum massflow. '
-                              'Adjusting power to match maximum allowed massflow.')
+                        logging.warning('Mass flow for input pair power=' + str(power) + ' pressure=' + str(pressure) + ' above maximum mass flow. Adjusting power to match maximum allowed mass flow.')
                         return self.massflow_charge_max, self.get_power(self.massflow_charge_max, pressure, mode)
                     else:
-                        return self.tespy_charge.imp_conns[self.storage_connection_charge].m.val_SI, power
+                        m = self.tespy_charge.imp_conns[self.storage_connection_charge].m.val_SI
+                        logging.info('Calculation successful for power=' + str(power) + ' pressure=' + str(pressure) + '. Mass flow=' + str(m) + '.')
+                        return m, power
                 except:
-                    print('ERROR: Could not find a solution for input pair: '
-                          'power=' + str(power) + ' pressure=' + str(pressure))
+                    logging.error('Could not find a solution for input pair power=' + str(power) + ' pressure=' + str(pressure) + '.')
                     return 0, 0
 
             elif mode == 'discharging':
-                init_path = self.tespy_discharge_path
-                design_path = self.tespy_discharge_path
+                if abs(power) < abs(self.power_nominal_discharge / 100):
+                    return 0, 0
+
+                design_path = self.wdir + 'discharge_design'
                 # set power of bus
                 self.tespy_discharge.imp_busses[self.power_bus_discharge].set_attr(P=power)
                 # set pressure at interface
                 self.tespy_discharge.imp_conns[self.storage_connection_discharge].set_attr(p=pressure, m=np.nan)
 
                 try:
-                    self.tespy_discharge.solve(mode='offdesign',
-                                               init_file=init_file,
-                                               design_file=init_file)
+                    self.tespy_discharge.solve(mode='offdesign', design_path=design_path)
                     if self.tespy_discharge.res[-1] > 1e-3:
                         print('ERROR: Could not find a solution for input pair: '
                               'power=' + str(power) + ' pressure=' + str(pressure))
@@ -201,13 +250,13 @@ class model:
         :raises: - :code:`ValueError`, mode is neither charge nor discharge
                  - :code:`ValueError`, if calculation method is not specified
          """
-        if pressure + 1e-4 < self.pressure_min:
+        if pressure + 1e-4 < self.p_min:
             print('ERROR: Pressure is below minimum pressure: '
-                  'min=' + str(self.pressure_min) + 'value=' + str(pressure))
+                  'min=' + str(self.p_min) + 'value=' + str(pressure))
             return 0
-        if pressure - 1e-4 > self.pressure_max:
+        if pressure - 1e-4 > self.p_max:
             print('ERROR: Pressure is above maximum pressure: '
-                  'max=' + str(self.pressure_max) + 'value=' + str(pressure))
+                  'max=' + str(self.p_max) + 'value=' + str(pressure))
             return 0
 
         if self.method == 'tespy':

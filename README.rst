@@ -121,27 +121,41 @@ After loading the plant model it is still possible to change the following param
 
 Based on these settings a plant design layout will be performed. All further operation will then reference this design point.
 After the plant's design, the bottom bore hole pressure, the mass flow and the total power input/output are be the only exchangable parameters.
-The calculation of the interface parameters mass flow and power will be outlined in the following sections.
+As mentioned in the introducing part, two different ways to control the power plant operation are required, which are outlined in the following sections.
 
 Calculation of mass flow
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
+The determination of the mass flow rate represents the common operation mode, if the operation schedule of the power plant does not interfere with any restrictions of the geological storage.
 The mass flow is calculated as a function of borehole pressure and electrical power: The electrical power input of the motor (power output of generator for discharging mode) is set to the target value from the input time series.
 The pressure level at the bottom bore hole is retrieved by the geological storage simulation. Also, if the mass flow rate was specified in a prior calculation it will be unset for this case.
 Following, TESPy will solve the plant model, whereby different outcomes are possible (see table ...).
 
+The expected result is, that the TESPy solver is able to find a feasible solution for plant's point of operation. The calculated mass flow rate and the scheduled power are returned in this first case.
+All other cases represent errors in the calculation or violations of the plant's operation limits. If the mass flow rate is higher than the allowed maximum mass flow rate (according to the power plant specifications), the power plant
+will reduce its power to the value according to the maximum mass flow rate. Thus, maximum mass flow rate and a corrected value for the power are returned.
+
+Other possible cases are pressure limit violations (higher than maximum or lower than minimum pressure), solver unable to find feasible solution or other errors within the calculation process.
+In these cases, the power plant is shut down and a mass flow rate of 0 kg/s along with a power of 0 W is returned.
+
 case;description;returned mass flow;returned power
-success;TESPy solver found feasible solution;mass flow;target power
-p < p_min or p > p_max;pressure out of pressure limits;0;0
-power < nominal power / 100;power input/output too small;0;0
-residual > 1e-3;no feasible solution for steady state was found by solver;0;0
+calculation successful;TESPy solver found feasible solution;mass flow rate;scheduled power
+mass flow > maximum mass flow;mass flow higher than possible;maximum mass flow;calculate power(maximum mass flow, pressure)
 mass flow < minimum mass flow;mass flow too low for plant operation;0;0
-mass flow > maximum mass flow;mass flow higher than possible;mass flow max;power(mass flow max, pressure)
-general error;;0;0
+p < p_min or p > p_max;pressure out of pressure limits;0;0
+residual > 1e-3;no feasible solution for steady state was found by solver;0;0
+other errors in calculation;Fluid property errors, unexpected errors in the solution process, other;0;0
 
 Calculation of power
 ^^^^^^^^^^^^^^^^^^^^
 
+The calculation of the power at a given mass flow rate and pressure is required, if the operation schedule of the storage leads to restrictions in mass flow rate.
+If a mass flow rate calculated in a prior iteration can not be met due to pressure limitations of the geological storage or limitations of the power plant, the
+actual power will be calculated in order show the deviation from the target.
+
+For the calculation of the electrical power, mass flow rate and pressure are specified in the TESPy model. Possible errors in the calculation are identical to the
+errors in the calculation of the mass flow rate (see table ...). In case of a successful calculation the calculated electrical power according to given mass flow rate
+and pressure is returned.
 
 Proxy model
 +++++++++++

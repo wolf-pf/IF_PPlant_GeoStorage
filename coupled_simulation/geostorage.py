@@ -7,12 +7,12 @@ __author__ = "wtp"
 
 """
 
-import utilities as util
+from coupled_simulation import utilities as util
 import json
 import os
 
 class geo_sto:
-    
+
     '''
     class to include geologic storage simulations
 
@@ -40,7 +40,7 @@ class geo_sto:
         else:
             self.keep_ecl_logs = False
 
-    
+
     def CallStorageSimulation(self, target_flow, tstep, iter_step, coupling_data, op_mode):
         '''
         Entry point for geo-storage simulation, handles all data transfer, executes simulator
@@ -52,12 +52,12 @@ class geo_sto:
         :param type: int
         :param tstepsize: length of current timestep
         :param type: float
-        :param op_mode: current operational mode, either 'charging', 'discharging' or 'shut-in' 
+        :param op_mode: current operational mode, either 'charging', 'discharging' or 'shut-in'
         :param type: str
         :returns: returns tuple of new pressure at the well (in reservoir) and actual (achieved) storage flow rate
         '''
         #this is the entry point for the geostorage coupling
-    
+
         if(self.simulator == 'ECLIPSE' or self.simulator == 'e300'):
             flowrate, pressure = self.RunECLIPSE(target_flow, tstep, iter_step, coupling_data.t_step_length, op_mode)
         elif self.simulator == 'proxy':
@@ -65,10 +65,10 @@ class geo_sto:
             #implement later
         else:
             print('ERROR: simulator flag not understood. Is: ', self.simulator)
-        
+
         return pressure, flowrate
-    
-    
+
+
     def RunECLIPSE(self, target_flowrate, tstep, iter_step, tstepsize, current_mode):
         '''
         Function acting as a wrapper for using eclipse (SChlumberger) as a storage simulator
@@ -79,12 +79,12 @@ class geo_sto:
         :param type: int
         :param tstepsize: length of current timestep
         :param type: float
-        :param op_mode: current operational mode, either 'charging', 'discharging' or 'shut-in' 
+        :param op_mode: current operational mode, either 'charging', 'discharging' or 'shut-in'
         :param type: str
         :returns: returns tuple of new pressure at the well (in reservoir) and actual (achieved) storage flow rate
         '''
 
-        
+
         if not current_mode == 'init':
             print('Running storage simulation:')
             print(self.working_dir_loc + self.simulation_title + '.DATA')
@@ -93,23 +93,23 @@ class geo_sto:
             print('Target storage flowrate:\t', '%.6f'%target_flowrate, '\tkg/s')
             print('\t\t\t\t', '%.6f'%(target_flowrate / self.surface_density), '\tsm3/s')
             print('Operational mode:\t\t', current_mode)
-            
+
         else:
             print('Running storage simulation to obtain initial pressure')
 
         #adjusting to surface volume rates
         target_flowrate = target_flowrate / self.surface_density
-        
+
         # assembling current ecl data file
         self.reworkECLData(tstep, tstepsize, target_flowrate, current_mode)
         # executing eclipse
         self.ExecuteECLIPSE(tstep, iter_step, current_mode)
         # reading results
         ecl_results = self.GetECLResults(tstep, current_mode)
-        
+
         #adjusting to mass flow rates
         ecl_results[1] = ecl_results[1] * self.surface_density
-        
+
         if not current_mode == 'init':
             print('----------------------------------------------------------------------')
             print('Pressure actual:\t\t', '%.6f'%ecl_results[0], '\tbars')
@@ -119,7 +119,7 @@ class geo_sto:
             print('Initial pressure is: \t', '%.6f'%ecl_results[0], 'bars')
         print('----------------------------------------------------------------------')
         return (ecl_results[1], ecl_results[0])
-    
+
 
     def rearrangeRSMDataArray(self, rsm_list):
         '''
@@ -133,10 +133,10 @@ class geo_sto:
         break_count = util.getStringCount(rsm_list, 'SUMMARY OF RUN')
         break_positions = util.getStringPositions(rsm_list, 'SUMMARY OF RUN')
         #break_positions = [i for i, s in enumerate(rsm_list) if 'SUMMARY OF RUN' in s]
-    
+
         if break_count > 0:
             interval = break_positions[1] - break_positions[0]
-    
+
         output = []
 
         for i in range(break_count):
@@ -154,15 +154,15 @@ class geo_sto:
                     temp2 += '\n'
                     temp = temp1 + temp2
                     temp = temp.replace('\t\t', '\t')
-                    
+
                     output[j] = temp
         #delete first two (empty) entries
         del output[0]
         del output[0]
-    
+
         return output
-    
-    
+
+
     def reworkECLData(self, timestep, timestepsize, flowrate, op_mode):
         '''
         function to change settings in the eclipse input file required for the storage simulation
@@ -173,14 +173,14 @@ class geo_sto:
         :param type: float
         :param flowrate: current target storage flow rate from power plant simulation
         :param type: float
-        :param op_mode: current operational mode, either 'charging', 'discharging' or 'shut-in' 
+        :param op_mode: current operational mode, either 'charging', 'discharging' or 'shut-in'
         :param type: str
         :returns: no return value
         '''
         # open and read eclipse data file
         ecl_data_file = util.getFile(self.working_dir_loc + self.simulation_title + '.DATA')
         #print(self.working_dir_loc + self.simulation_title + '.DATA')
-        
+
         #rearrange the entries in the saved list
         if timestep == 1:
             #look for EQUIL and RESTART keyword
@@ -189,28 +189,28 @@ class geo_sto:
                 #delete equil and replace with restart
                 #assemble new string for restart section
                 ecl_data_file[equil_pos] = 'RESTART\n'
-                ecl_data_file[equil_pos + 1] =  '\'' + self.simulation_title + '\' \t' 
+                ecl_data_file[equil_pos + 1] =  '\'' + self.simulation_title + '\' \t'
                 ecl_data_file[equil_pos + 1] += str(int(self.restart_id) + timestep )  + ' /\n'
             else:
                 restart_pos = util.searchSection(ecl_data_file, "RESTART")
                 if restart_pos > 0:
                     #assemble new string for restart section
-                    ecl_data_file[restart_pos + 1] =  '\'' + self.simulation_title + '\' \t' 
+                    ecl_data_file[restart_pos + 1] =  '\'' + self.simulation_title + '\' \t'
                     ecl_data_file[restart_pos + 1] += str(int(self.restart_id) + timestep)  + ' /\n'
         if timestep > 1:
             restart_pos = util.searchSection(ecl_data_file, "RESTART")
             if restart_pos > 0:
                 #assemble new string for restart section
-                ecl_data_file[restart_pos + 1] =  '\'' + self.simulation_title + '\' \t' 
+                ecl_data_file[restart_pos + 1] =  '\'' + self.simulation_title + '\' \t'
                 ecl_data_file[restart_pos + 1] += str(int(self.restart_id) + timestep )  + ' /\n'
-            
+
         #now rearrange the well schedule section
         schedule_pos = util.searchSection(ecl_data_file, "WCONINJE")
         if schedule_pos == -1:
             schedule_pos = util.searchSection(ecl_data_file, "WCONPROD")
 
         #print(schedule_pos)
-            
+
         if schedule_pos > 0:
             # delete the old well schedule
             del ecl_data_file[schedule_pos:]
@@ -219,10 +219,10 @@ class geo_sto:
             well_count = len(self.well_names)
             well_target = abs(flowrate / well_count) / self.reservoir_compartments
             well_target_days = well_target * 60.0 * 60.0 *24.0
-    
+
             #now construct new well schedule section
             #ecl_data_file.append('\n')
-            
+
             if op_mode == 'charging':
                 ecl_data_file.append("WCONINJE\n")
                 for idx in range(len(self.well_names)):
@@ -231,7 +231,7 @@ class geo_sto:
                     line += str(well_target_days) + '\t'
                     line += '1*\t' + str(self.well_upper_BHP[idx]) + '/\n'
                     ecl_data_file.append(line)
-    
+
             elif op_mode == 'discharging':
                 ecl_data_file.append("WCONPROD\n")
                 for idx in range(len(self.well_names)):
@@ -251,14 +251,14 @@ class geo_sto:
                     ecl_data_file.append(line)
             else:
                 print('ERROR: operational mode not understood in timestep: ', timestep, ' is: ', op_mode)
-    
+
             ecl_data_file.append('/')
             #finish schedule
             timestepsize_days = timestepsize / 60.0 / 60.0 / 24.0
             file_finish = ['\n', '\n', 'TSTEP\n', '1*' + str(timestepsize_days) + '\n', '/\n', '\n', '\n', 'END\n' ]
             ecl_data_file += file_finish
-    
-            
+
+
             #save to new file
             if not op_mode == 'init':
                 temp_path = self.working_dir_loc + self.simulation_title + '.DATA'
@@ -267,10 +267,10 @@ class geo_sto:
                 temp_path = self.working_dir_loc + self.simulation_title + '_init.DATA'
             #print(temp_path)
             util.writeFile(temp_path, ecl_data_file)
-    
+
 
     def deleteFFile(self, tstep):
-        
+
         file_ending = ".F"
         temp_nr_str = ""
 
@@ -282,7 +282,7 @@ class geo_sto:
             temp_nr_str = "0" + str(tstep)
         else:
             temp_nr_str =  str(tstep)
-        
+
         file_ending += temp_nr_str
 
         if tstep > 0:
@@ -304,7 +304,7 @@ class geo_sto:
         '''
         #import subprocess
         #import os
-    
+
         if os.name == 'nt':
             simulation_path = ''
             if not op_mode == 'init':
@@ -321,10 +321,10 @@ class geo_sto:
         #elif os.name == 'posix':
             #log_output_loc += ' &'
             #rc = subprocess.call(['eclrun', simulator_loc, simulation_title_loc, '>', log_output_loc])
-        
+
         #print(rc)
-    
-    
+
+
     def GetECLResults(self, timestep, current_op_mode):
         '''
         Function to get the eclipse results from the *.RSM file and analyze the results
@@ -335,7 +335,7 @@ class geo_sto:
         :param type: str
         :returns: returns a tuple of float values containing pressure and actual storage flow rate
         '''
-        
+
         #first read the results file
         if not current_op_mode == 'init':
             filename = self.working_dir_loc + self.simulation_title + '.RSM'
@@ -346,12 +346,12 @@ class geo_sto:
         reorderd_rsm_data = self.rearrangeRSMDataArray(results)
         #eleminate additional whitespaces, duplicate entries, etc.
         well_results = util.contractDataArray(reorderd_rsm_data)
-    
+
         # check number of data entries in well_results:
         values = len(well_results) - 4
         if values > 1:
             print('Warning: possible loss of data, expecting one data line in RSM file only')
-        
+
         #data structures to save the flowrates, pressures and names of all individual wells
         well_pressures = []
         well_flowrates_days = []
@@ -360,11 +360,11 @@ class geo_sto:
         well_names_loc = []
         flowrate_actual = 0.0
         pressure_actual = 0.0
-        
+
         # get well pressures
         pressure_keyword = 'WBHP'
         bhp_positions = util.getStringPositions(well_results[0], pressure_keyword)
-    
+
         for i in bhp_positions:
             well_pressures.append(float(well_results[-1][i]))
             well_names.append(well_results[2][i])
@@ -378,8 +378,8 @@ class geo_sto:
                 else:
                     print('Problem: could not determine operational mode, assuming injection')
                     well_pressures[-1] = bhp_limits_well[1]
-                
-        
+
+
         # now get well flow rates
         if current_op_mode == 'discharging': #negative flow rates
             #get all positions of WGPR entries in well_results
@@ -388,20 +388,20 @@ class geo_sto:
             for i in flow_positions:
                 well_flowrates_days.append(float(well_results[-1][i]))
                 well_names_loc.append(well_results[2][i])
-                   
+
         elif current_op_mode == 'charging': #positive flow rates
             flow_keyword = 'WGIR'
             flow_positions = util.getStringPositions(well_results[0], flow_keyword)
             for i in flow_positions:
                 well_flowrates_days.append(float(well_results[-1][i]))
                 well_names_loc.append(well_results[2][i])
-    
+
         elif current_op_mode == 'shut-in' or current_op_mode == 'init':
             #do nothing
             pass
-        else: 
-            print('Warning: operational mode not understood, assuming shut-in at timestep: ', timestep) 
-         
+        else:
+            print('Warning: operational mode not understood, assuming shut-in at timestep: ', timestep)
+
         if ( current_op_mode == 'charging' or current_op_mode == 'discharging'):
             # go through well names list and compare strings.
             # rearrange if necessary to get correct match for pressures and flowrates
@@ -418,17 +418,17 @@ class geo_sto:
             well_flowrates_temp = well_flowrates_days
             for i in correct_idx:
                 well_flowrates_days[i] = well_flowrates_temp[i]
-        
-            #calculate total flowrate 
+
+            #calculate total flowrate
             #maybe add timestep dependence (only needed if more than one per call)?
             #change unit of flowrates to sm3/s from sm3/d
             for i in range(len(well_flowrates_days)):
                 well_flowrates.append(well_flowrates_days[i] / 60.0 / 60.0 / 24.0)
 
-    
+
             flowrate_actual = sum(well_flowrates)
 
-            if flowrate_actual > 0.0 :    
+            if flowrate_actual > 0.0 :
                 #calculate average pressure
                 pressure_actual = 0.0
                 for i in range(len(well_pressures)):
@@ -440,7 +440,7 @@ class geo_sto:
             pressure_actual = sum(well_pressures) / float(len(well_pressures))
 
         return [pressure_actual, flowrate_actual]
-    
+
     def getWellBHPLimits(self, well_name):
         '''
         function to obtain pressure limits for a given well

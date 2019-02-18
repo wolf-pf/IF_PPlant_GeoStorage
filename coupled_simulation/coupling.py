@@ -11,8 +11,7 @@ import sys
 import getopt
 import pandas as pd
 import numpy as np
-import powerplant as pp
-import geostorage as gs
+from coupled_simulation import powerplant as pp, geostorage as gs
 import json
 import datetime
 import os
@@ -31,6 +30,8 @@ def __main__(argv):
     :returns: no return value
     """
 
+    if len(argv) == 0:
+        return
     #read main input file and set control variables, e.g. paths, identifiers, ...
     #path = (r'D:\Simulations\if_testcase\testcase.main_ctrl.json')
     path = ''

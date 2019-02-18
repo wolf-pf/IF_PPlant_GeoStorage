@@ -1,6 +1,6 @@
 {
 	"massflow_min_rel": 0.25,
-	"massflow_max_rel": 1,
+	"massflow_max_rel": 1.05,
 	"power_nominal_charge": 1e7,
 	"power_nominal_discharge": -1e7,
 	"pressure_nominal_charge": 70,

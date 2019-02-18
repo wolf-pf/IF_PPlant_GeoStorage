@@ -13,7 +13,6 @@ import numpy as np
 import json
 from scipy import interpolate
 import logging
-
 from tespy import nwkr, logger, con, hlp
 
 logger.define_logging(
@@ -54,7 +53,7 @@ class model:
 
     Example
     -------
-    >>> from coupling import cp, pp
+    >>> from coupled_simulation import cp, pp
     """
 
     def __init__(self, cd, min_well_depth, num_wells, p_max, p_min):

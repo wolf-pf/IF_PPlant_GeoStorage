@@ -8,7 +8,8 @@ Documentation of the Power Plant Geostorage Interface
     :backlinks: top
 
 With the Power Plant Geostorage Interface it is possible to couple the simulation of storage and power plant operation.
-The interface provides a data exchange between the sotrage and the power plant model and allows to utilize different simulations models.
+The interface provides a control logic for the energy storage operation and exchanges data between the sotrage and the power plant model.
+It also allows the exchange of the simulation models.
 
 Coupled Simulation
 ------------------
@@ -16,25 +17,30 @@ Coupled Simulation
 Description of the interface
 ++++++++++++++++++++++++++++
 
-- modelinitialisation (read input time series, control files, prepare models)
-- start loop for timestep
+The coupled simulation of the power plant and the geological storage is performed by exchanging the physical parameters mass flow and pressure between individual models.
+The operation schedule is provided as input time series, thus, the models are coupled time stepwise and iterate in a loop until the interface parameters - bottom bore hole pressure and mass flow - are matched in both models:
 
-	- read power input/output from input time series, initial pressure from geological model
-	- calculate input/output mass flow and actual power with power plant model (at given pressure level and power requirement)
-	- calculate actual pressure and mass flow with geological storage model
-	- check convergence:
+The power plant model calculates the mass flow into or from the geological storage required in order to meet the scheduled power input or output given the actual bottom bore hole pressure.
+Subsequently, the storage model calculates the bottom bore hole pressure for that mass flow and passes the pressure to the power plantmodel. This process is repeated until the models converge.
 
-		- assumed power of power plant model vs. actual pressure (go back to 2.2, recalculate mass flow)
-		- pressure limits of storage (go back to 2.2, reduce mass flow, calculate power input/output)
+Convergence is defined by the following criterions:
 
-	- write data to output file, if convergence aachieved or number of iterations exceeded:
+.. math::
 
-		- timestamp
-		- power
-		- pressure
-		- mass flow rate
-		- temperature at boreholen (optional)
+	\text{and}
+	\begin{cases}
+	\text{or} &
+	\begin{cases}
+	\frac{|p_{i-1} - p_{i}|}{p_{i}} < \epsilon \\
+	|p_{i-1} - p_{i}| < \delta
+	\end{cases} \\
+	& \frac{|m_{pp} - m_{sto}|}{m_{sto}} < \epsilon
+	\end{cases}	
 
+If convergence is achieved, pressure, mass flow and actual power are written into the output file and the simulation for the next timestep is started.
+		
+Operation control
++++++++++++++++++
 
 Input data
 ++++++++++
@@ -91,11 +97,10 @@ TESPy model
 
 TESPy (Thermal Engineering Systems in Python) is a modular and component based power plant design and simulation software.
 The Software is designed to simulate stationary operation of power plants, district heating systems, heat pumps or similar applications.
-
 By connecting different components with each other a network is created, which can be represented by a system nonlinear of equations.
-As TESPy is a equation-based approach, the system of equations is additionally influenced by parameter specification of the user.
-In order to calculate the stationary operation of the plant, the fluid properties and the fluid composition of all connections between the components of the network has to be identified.
-Thus, the system's variables are: mass flow, pressure, enthalpy and mass fraction of the fluid components. Component parameters can optionally be used as additional variables of the system, e. g. for the layout of a pipe diameter.
+	
+In order to calculate the stationary operation of the system, the fluid properties and the fluid composition of all connections between the components of the network have to be identified.
+Thus, the system's variables are: mass flow, pressure, enthalpy and mass fractions of the fluid components. Component parameters can optionally be used as additional variables of the system, e. g. for the layout of a pipe diameter.
 In order to numerically solve the system of equations, TESPy uses the multi dimensonal Newton–Raphson method.
 
 The value of the system variables is calculated accoring to equation (0.0) in every iteration i:
@@ -104,24 +109,33 @@ The value of the system variables is calculated accoring to equation (0.0) in ev
 
 	\vec{x}_{i+1}=\vec{x}_i-J\left(\vec{x}_i\right)^{-1}\cdot f\left(\vec{x}_i\right)
 
-Therefor, the calculation of the residual values of the equations :math:`f\left(\vec{x}_i\right)` as well as the calculation of the inversed jacobian matrix :math:`J\left(\vec{x}_i\right)` is required.
-The algorithm is terminated, if the magnitude of the equations (vector norm :math:`||f\left(\vec{x}_i\right)||`) is smaller than a specified residual value:
+Therefore, the calculation of the residual values of the equations :math:`f\left(\vec{x}_i\right)` as well as the calculation of the inversed jacobian matrix :math:`J\left(\vec{x}_i\right)` is required.
+The algorithm is terminated, if the magnitude of the equations (vector norm :math:`||f\left(\vec{x}_i\right)||`) is smaller than a specified residual value (eq. 0.0):
 
 .. math::
 
 	||f(\vec{x}_i)|| > \epsilon
 	
-[1] provides further detailed information on TESPy.
-	
-For the interface, the power plant model is loaded with the tespy.network_reader-module, allowing to load the plant's topology and parametrisation as tabular data (from .csv-format).
+Every component delivers a set of basic equations to the system of equations. Depending on the parametrisation of the components and connections more equations are added to the systems.
+In this way, the topology and the parametrisation determine the set of equations used to describe the system: Different parametrisation of the same topological model results in a different system of equations.
+Thus, we will not provide a detailed description of the power plant model here. Detailed information on the implementation of different components is provided in the online documentation and the API-documentation [1].
+
+For usage in the interface the power plant model has to be designed by defining the topology and process parameters. The tespy.network_reader-module allows to load the plant's representation as tabular data (from .csv-format).
 After loading the plant model it is still possible to change the following parameters:
 
 - depth of the wells :math:`L_{wells}` and number of wells :math:`n_{wells}`, as well as minimum and maximum pressure at the bottom of bore holes :math:`p_{min}`, :math:`p_{max}` provided by the geostorage model controle files.
 - the nominal power, nominal pressure at bottom of the bore hole, maximum and minimum (relative) mass flow (in regard to mass flow at nominal power and pressure) provided by the powerplant model control files.
 
-Based on these settings a plant design layout will be performed. All further operation will then reference this design point.
-After the plant's design, the bottom bore hole pressure, the mass flow and the total power input/output are be the only exchangable parameters.
-As mentioned in the introducing part, two different ways to control the power plant operation are required, which are outlined in the following sections.
+The depth of the wells and the number of wells is used to determine the pressure losses in the pipes connecting the power plant's outlet (compression)/inlet (expansion) with the geological storage:
+The total mass flow will be split up evenly amongst the pipes and the pressure loss is calculated using the darcy friction factor (equation 0.0).
+Nominal power and nominal pressure are required to calculate the nominal mass flow.
+
+.. math::
+
+	0 = \delta p - \frac{\rho \cdot \lambda \left(Re, k_{s}, D \right) \cdot L \cdot c^2}{2 \cdot D}	
+
+After the power plant design calculation, only the interface parameters (bottom bore hole pressure, total mass flow and total power input/output) are exchangable parameters.
+The following two section describe the different ways to control the power plant operation using the interface parameters.
 
 Calculation of mass flow
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -165,6 +179,20 @@ linking the key figures of the compressed air energy storage to each other.
 
 Software tests
 --------------
+
+Stuff
+-----
+
+<----
+Each type of component represents a special case of an open thermodynamic system with a variable amount of inlets and outlets.
+Equation 0.0 describes its energy balance. As the software solves for stationary operation, the sum of all mass flows from and into a component must be equal to zero (equation 0.0).
+
+.. math::
+
+	0 = \sum_i (\dot{m}_{out,i} \cdot h_{out,i}) - \sum_j (\dot{m}_{in,j} \cdot h_{in,j}) - \dot{Q} - P 
+
+	0 = \sum_i \dot{m}_{out,i} - \sum_j \dot{m}_{in,j} \cdot h_{in,j}
+--->
 
 Literature
 ----------

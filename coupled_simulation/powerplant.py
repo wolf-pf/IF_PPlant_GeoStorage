@@ -54,6 +54,7 @@ class model:
     Example
     -------
     >>> from coupled_simulation import cp, pp
+    >>> print('hi')
     """
 
     def __init__(self, cd, min_well_depth, num_wells, p_max, p_min):
@@ -126,7 +127,6 @@ class model:
         self.tespy_charge.imp_comps[self.pipe_discharge].set_attr(L=self.min_well_depth)
         self.tespy_discharge.solve('design')
         self.tespy_discharge.save(self.wdir + '/discharge_design', path_abs=True)
-        self.tespy_discharge.print_results()
         self.m_nom_discharge = self.tespy_discharge.imp_conns[self.massflow_conn_discharge].m.val_SI
         self.m_min_discharge = self.m_nom_discharge * self.massflow_min_rel
         self.m_max_discharge = self.m_nom_discharge * self.massflow_max_rel
@@ -221,7 +221,6 @@ class model:
                 try:
                     self.tespy_discharge.solve(mode='offdesign', design_path=design_path, path_abs=True)
                     m = self.tespy_discharge.imp_conns[self.massflow_conn_discharge].m.val_SI
-                    self.tespy_discharge.print_results()
 
                     if self.tespy_discharge.res[-1] > 1e-3:
                         msg = 'Could not find a solution for input pair power=' + str(power) + ' pressure=' + str(pressure) + '.'

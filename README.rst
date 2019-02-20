@@ -3,16 +3,22 @@ Documentation of the Power Plant Geostorage Interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. contents::
-    :depth: 1
+    :depth: 2
     :local:
     :backlinks: top
+	
+Abstract
+--------
+	
+Introduction
+------------
 
 With the Power Plant Geostorage Interface it is possible to couple the simulation of storage and power plant operation.
 The interface provides a control logic for the energy storage operation and exchanges data between the sotrage and the power plant model.
 It also allows the exchange of the simulation models.
 
-Coupled Simulation
-------------------
+Coupling Module
+---------------
 
 Description of the interface
 ++++++++++++++++++++++++++++
@@ -41,6 +47,34 @@ If convergence is achieved, pressure, mass flow and actual power are written int
 		
 Operation control
 +++++++++++++++++
+
+The operation schedule of the compressed air energy storage is an external input parameter for the model and not influenced by the coupled simulation.
+But both, the geological storage and the power plant, have physical restrictions once they have been constructed.
+These are e. g. pressure limits of the porous media or limitations in the power plant's range of operation (partload/overload).
+If any of these limits are violated, the storage operation needs to be adjusted. This section outlines possible control
+
+After processing the input parameters both models are initialised and the simulation starts. 
+
+The interface 
+
+- modelinitialisation (read input time series, control files, prepare models)
+- start loop for timestep
+
+	- read power input/output from input time series, initial pressure from geological model
+	- calculate input/output mass flow and actual power with power plant model (at given pressure level and power requirement)
+	- calculate actual pressure and mass flow with geological storage model
+	- check convergence:
+
+		- assumed power of power plant model vs. actual pressure (go back to 2.2, recalculate mass flow)
+		- pressure limits of storage (go back to 2.2, reduce mass flow, calculate power input/output)
+
+	- write data to output file, if convergence aachieved or number of iterations exceeded:
+
+		- timestamp
+		- power
+		- pressure
+		- mass flow rate
+		- temperature at boreholen (optional)
 
 Input data
 ++++++++++
@@ -79,23 +113,33 @@ Geological Storage Module
 Power Plant Module
 ------------------
 
-The power plant module handles the power plant simulation. There are two main functions of the power plant module:
+The power plant module handles the power plant simulation in the interface. There are two main functions of the power plant module:
 
 - Calculate the mass flow pressed into or extracted from the storage for a given pressure level at the bottom of the borehole and given power input or output respectively.
-- Calculate the power input (or output) at given mass flow and given pressure level. This function is e. g. required, if the scheduled power can not be reached due to restrictions of the storage or the power plant.
+- Calculate the power input (or output) at given mass flow and given pressure level. This function is e. g. required, if the scheduled power can not be reached due to restrictions of the compressed air energy storage.
 
-For this purpose a power plant model is based on single components, e. g. compressors, turbines (turbine stages), heat exchangers, control valves or piping, is set up.
-The interface implementation supports two different approaches for calculation of interface functionalities as mentioned above:
+As mentioned in the first chapter, the basic task for the interface is to exchange data (pressure and mass flow) between a power plant and a storage model.
+A very flexible representation of a power plant can be provided with two-dimensional lookup tables linking mass flow and pressure to power, as this approach
+provides a standardised data structure for the power plant representation. The creation of tabular can be outsourced to any power plant simulation software.
+Also, the calculation speed is much higher compared to running a power plant simulation software for each iteration. The downside of this approach is,
+that the power plant design needs to be performed prior to the simulation and is not coupled directly to parameters of the geological storage. For example, these could be pressure limits, the number of wells or the depth of the wells.
+Thus, the power plant module provides a second implementation of the power plant model for interface using the power plant simulation software TESPy (Thermal Engineering Systems in Python).
+In this way, it is possible to design the power plant based on information of the geological storage. Additionally, the generation of tabular data is performed automatically based on these information.
 
-- Importing a TESPy power plant model or
-- using a two dimensional lookup table linking the three quantities (mass flow, pressure level and power) as well as an inverse function.
+The following two sections will describe the implementation of the tabular data power plant model and a component based power plant model using TESPy.
 
-The following sections will introduce the different modeling approaches and outline their strenghts and weaknesses.
+Tabular data model
+++++++++++++++++++
 
-TESPy model
-+++++++++++
+<---
+The main reason for implementing a proxy model in the interface is reduction of calculation time. The proxy model is a two dimensional lookup table,
+linking the key figures of the compressed air energy storage to each other.
+--->
 
-TESPy (Thermal Engineering Systems in Python) is a modular and component based power plant design and simulation software.
+Power plant simulation model
+++++++++++++++++++++++++++++
+
+TESPy is a modular and component based power plant design and simulation software.
 The Software is designed to simulate stationary operation of power plants, district heating systems, heat pumps or similar applications.
 By connecting different components with each other a network is created, which can be represented by a system nonlinear of equations.
 	
@@ -170,12 +214,6 @@ actual power will be calculated in order show the deviation from the target.
 For the calculation of the electrical power, mass flow rate and pressure are specified in the TESPy model. Possible errors in the calculation are identical to the
 errors in the calculation of the mass flow rate (see table ...). In case of a successful calculation the calculated electrical power according to given mass flow rate
 and pressure is returned.
-
-Proxy model
-+++++++++++
-
-The main reason for implementing a proxy model in the interface is reduction of calculation time. The proxy model is a two dimensional lookup table,
-linking the key figures of the compressed air energy storage to each other.
 
 Software tests
 --------------

@@ -32,6 +32,7 @@ def __main__(argv):
 
     if len(argv) == 0:
         return
+
     #read main input file and set control variables, e.g. paths, identifiers, ...
     #path = (r'D:\Simulations\if_testcase\testcase.main_ctrl.json')
     path = ''
@@ -354,13 +355,4 @@ class Logger(object):
         #you might want to specify some extra behavior here.
         pass
 
-
-
-
-#__main__()
-
-
-
-
-#if __name__ == "__main__":
-__main__(sys.argv[1:])
+#__main__(sys.argv[1:])

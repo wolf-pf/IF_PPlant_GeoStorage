@@ -16,7 +16,7 @@ import os
 class powerplant_tests:
 
     def setup(self):
-        self.cd = cp.coupling_data('./testcase.main_ctrl.json')
+        self.cd = cp.coupling_data(os.getcwd() + '/tests/testcase.main_ctrl.json')
         self.cd.powerplant_path = self.cd.powerplant_path.replace('\\', '/')
         well_depth = 750
         num_wells = 10
@@ -38,5 +38,5 @@ class powerplant_tests:
 
         # other
 
-        shutil.rmtree('-/' + self.cd.powerplant_path + '/charge_design', ignore_errors=True)
-        shutil.rmtree('-/' + self.cd.powerplant_path + '/discharge_design', ignore_errors=True)
+        shutil.rmtree(os.getcwd() + '/tests/' + self.cd.powerplant_path + '/charge_design', ignore_errors=True)
+        shutil.rmtree(os.getcwd() + '/tests/' + self.cd.powerplant_path + '/discharge_design', ignore_errors=True)

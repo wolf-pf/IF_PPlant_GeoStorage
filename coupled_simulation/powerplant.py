@@ -50,11 +50,6 @@ class model:
     the geological storage. The pressure limits are the pressure limits at the
     bottom of the bore holes. These inforamtion are provided in
     the geological storage model control file.
-
-    Example
-    -------
-    >>> from coupled_simulation import cp, pp
-    >>> print('hi')
     """
 
     def __init__(self, cd, min_well_depth, num_wells, p_max, p_min):

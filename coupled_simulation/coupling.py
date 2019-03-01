@@ -206,7 +206,7 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
 
         if storage_mode == 'charging' or storage_mode == 'discharging':
             # pressure check
-            if abs((p0_temp - p1) / p1) > md.pressure_diff_rel or abs((p0_temp- p1)) > md.pressure_diff_abs:
+            if abs((p0_temp - p1) / p1) > md.pressure_diff_rel or abs(p0_temp - p1) > md.pressure_diff_abs:
                 m, power = powerplant.get_mass_flow(power, p1, storage_mode)
                 print('Adjusting mass flow rate.')
                 print('m / m_corr\t\t', '%.6f'%m, '/', '%.6f'%m_corr, '[kg/s]')
@@ -224,8 +224,8 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
                 print('m / m_corr\t\t', '%.6f'%m, '/', '%.6f'%m_corr, '[kg/s]')
                 print('p0_new / p1\t\t', '%.6f'%p0_temp, '/', '%.6f'%p1, '[bars]')
 
-            elif abs((m - m_corr) / m_corr) > md.flow_diff_rel:
-                power = powerplant.get_power(m_corr, p1, storage_mode)
+            elif abs((m - m_corr) / m_corr) > md.flow_diff_rel or abs(m - m_corr) > md.flow_diff_abs:
+                m, power = powerplant.get_power(m_corr, p1, storage_mode)
                 tstep_accepted = True
                 print('Adjusting power to ', power)
                 print('m / m_corr\t\t', '%.6f'%m, '/', '%.6f'%m_corr, '[kg/s]')

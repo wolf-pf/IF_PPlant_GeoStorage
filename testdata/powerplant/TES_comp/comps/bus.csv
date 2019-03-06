@@ -1,2 +1,2 @@
-id;label;P;P_set
-0x7fb29df9ac18;input power;110000000.00000001;True
+label;P;P_set
+input power;109999999.99999999;True

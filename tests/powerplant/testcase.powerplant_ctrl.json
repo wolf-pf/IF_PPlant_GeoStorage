@@ -3,7 +3,7 @@
 	"tespy_charge_path": "TES_comp",
 	"tespy_discharge_path": "TES_exp",
 	"massflow_min_rel": 0.25,
-	"massflow_max_rel": 1.05,
+	"massflow_max_rel": 1.00,
 	"power_nominal_charge": 1e7,
 	"power_nominal_discharge": -1e7,
 	"pressure_nominal_charge": 70,

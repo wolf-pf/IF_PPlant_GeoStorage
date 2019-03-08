@@ -35,6 +35,9 @@ class geo_sto:
         self.working_dir_loc = wdir
         self.keep_ecl_logs = False
 
+        # save the original simulation title in case of eclipse simulation (not needed for e300)
+        self.simulation_title_orig = self.simulation_title
+
         if self.retain_ecl_logs == "True":
             self.keep_ecl_logs = True
         else:
@@ -86,6 +89,14 @@ class geo_sto:
 
 
         if not current_mode == 'init':
+            if self.simulator == "ECLIPSE":
+                print("Resetting simulation title!")
+                self.simulation_title = self.simulation_title_orig + "_" + str(tstep)
+                if tstep == 0:
+                    os.rename(self.working_dir_loc + self.simulation_title_orig  + '.DATA', self.working_dir_loc + self.simulation_title_orig + "_" + str(tstep) + '.DATA')
+                else:
+                    os.rename(self.working_dir_loc + self.simulation_title_orig + "_" + str(tstep-1) + '.DATA', self.working_dir_loc + self.simulation_title_orig + "_" + str(tstep) + '.DATA')
+
             print('Running storage simulation:')
             print(self.working_dir_loc + self.simulation_title + '.DATA')
             print('Timestep/iteration:\t\t', '%.0f'%tstep, '/', '%.0f'%iter_step)
@@ -344,13 +355,21 @@ class geo_sto:
         results = util.getFile(filename)
         #sort the rsm data to a more uniform dataset
         reorderd_rsm_data = self.rearrangeRSMDataArray(results)
+        #print(reorderd_rsm_data)
         #eleminate additional whitespaces, duplicate entries, etc.
         well_results = util.contractDataArray(reorderd_rsm_data)
-
+        #print(well_results)
+        
         # check number of data entries in well_results:
-        values = len(well_results) - 4
+        
+        entry_count_temp = 0
+        if self.simulator == 'e300':
+            entry_count_temp = 4
+        elif self.simulator == 'ECLIPSE':
+            entry_count_temp = 5
+        values = len(well_results) - entry_count_temp
         if values > 1:
-            print('Warning: possible loss of data, expecting one data line in RSM file only')
+            print('Warning: possible loss of data, too many data lines in RSM file')
 
         #data structures to save the flowrates, pressures and names of all individual wells
         well_pressures = []

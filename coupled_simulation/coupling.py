@@ -108,7 +108,7 @@ def __main__(argv):
     print('######################################################################')
     p0 = 0.0 #old pressure (from last time step / iter)
     # get initial pressure before the time loop
-    p0, dummy_flow = geostorage.CallStorageSimulation(0.0, 0, 0, cd, 'init')
+    p0, dummy_flow = geostorage.CallStorageSimulation(0.0, -1, 0, cd, 'init')
     print('Simulation initialzation completed.')
     print('######################################################################')
 
@@ -130,7 +130,7 @@ def __main__(argv):
         # save last pressure (p1) for next time step as p0
         p0 = p_actual
         #deleting old files
-        geostorage.deleteFFile(t_step)
+        geostorage.deleteSimFiles(t_step)
 
         # write pressure, mass flow and power to .csv
         if cd.auto_eval_output == True:
@@ -360,4 +360,4 @@ class Logger(object):
         #you might want to specify some extra behavior here.
         pass
 
-#__main__(sys.argv[1:])
+__main__(sys.argv[1:])

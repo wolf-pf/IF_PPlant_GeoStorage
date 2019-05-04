@@ -37,6 +37,8 @@ class geo_sto:
 
         # save the original simulation title in case of eclipse simulation (not needed for e300)
         self.simulation_title_orig = self.simulation_title
+        self.current_simulation_title = self.simulation_title
+        self.old_simulation_title = self.simulation_title
 
         if self.retain_ecl_logs == "True":
             self.keep_ecl_logs = True
@@ -87,18 +89,19 @@ class geo_sto:
         :returns: returns tuple of new pressure at the well (in reservoir) and actual (achieved) storage flow rate
         '''
 
+        #set simulation title
+        self.old_simulation_title = self.current_simulation_title
+
+        if current_mode == 'init':
+            self.current_simulation_title = self.simulation_title_orig + '_TSTEP_INIT'
+            os.rename(self.working_dir_loc + self.simulation_title_orig  + '.DATA', self.working_dir_loc + self.current_simulation_title + '.DATA')
+        else:
+            self.current_simulation_title = self.simulation_title_orig + '_TSTEP_' + str(tstep)
+            os.rename(self.working_dir_loc + self.old_simulation_title + '.DATA', self.working_dir_loc + self.current_simulation_title + '.DATA')
 
         if not current_mode == 'init':
-            if self.simulator == "ECLIPSE":
-                print("Resetting simulation title!")
-                self.simulation_title = self.simulation_title_orig + "_" + str(tstep)
-                if tstep == 0:
-                    os.rename(self.working_dir_loc + self.simulation_title_orig  + '.DATA', self.working_dir_loc + self.simulation_title_orig + "_" + str(tstep) + '.DATA')
-                else:
-                    os.rename(self.working_dir_loc + self.simulation_title_orig + "_" + str(tstep-1) + '.DATA', self.working_dir_loc + self.simulation_title_orig + "_" + str(tstep) + '.DATA')
-
             print('Running storage simulation:')
-            print(self.working_dir_loc + self.simulation_title + '.DATA')
+            print(self.working_dir_loc + self.current_simulation_title + '.DATA')
             print('Timestep/iteration:\t\t', '%.0f'%tstep, '/', '%.0f'%iter_step)
             print('Timestep size:\t\t\t', tstepsize, '\t\ts')
             print('Target storage flowrate:\t', '%.6f'%target_flowrate, '\tkg/s')
@@ -189,7 +192,7 @@ class geo_sto:
         :returns: no return value
         '''
         # open and read eclipse data file
-        ecl_data_file = util.getFile(self.working_dir_loc + self.simulation_title + '.DATA')
+        ecl_data_file = util.getFile(self.working_dir_loc + self.current_simulation_title + '.DATA')
         #print(self.working_dir_loc + self.simulation_title + '.DATA')
 
         #rearrange the entries in the saved list
@@ -200,19 +203,19 @@ class geo_sto:
                 #delete equil and replace with restart
                 #assemble new string for restart section
                 ecl_data_file[equil_pos] = 'RESTART\n'
-                ecl_data_file[equil_pos + 1] =  '\'' + self.simulation_title + '\' \t'
+                ecl_data_file[equil_pos + 1] =  '\'' + self.old_simulation_title + '\' \t'
                 ecl_data_file[equil_pos + 1] += str(int(self.restart_id) + timestep )  + ' /\n'
             else:
                 restart_pos = util.searchSection(ecl_data_file, "RESTART")
                 if restart_pos > 0:
                     #assemble new string for restart section
-                    ecl_data_file[restart_pos + 1] =  '\'' + self.simulation_title + '\' \t'
+                    ecl_data_file[restart_pos + 1] =  '\'' + self.old_simulation_title + '\' \t'
                     ecl_data_file[restart_pos + 1] += str(int(self.restart_id) + timestep)  + ' /\n'
         if timestep > 1:
             restart_pos = util.searchSection(ecl_data_file, "RESTART")
             if restart_pos > 0:
                 #assemble new string for restart section
-                ecl_data_file[restart_pos + 1] =  '\'' + self.simulation_title + '\' \t'
+                ecl_data_file[restart_pos + 1] =  '\'' + self.old_simulation_title + '\' \t'
                 ecl_data_file[restart_pos + 1] += str(int(self.restart_id) + timestep )  + ' /\n'
 
         #now rearrange the well schedule section
@@ -271,36 +274,68 @@ class geo_sto:
 
 
             #save to new file
-            if not op_mode == 'init':
-                temp_path = self.working_dir_loc + self.simulation_title + '.DATA'
-            else:
-                #print('ini mode')
-                temp_path = self.working_dir_loc + self.simulation_title + '_init.DATA'
-            #print(temp_path)
+            #if not op_mode == 'init':
+            #    temp_path = self.working_dir_loc + self.current_simulation_title + '.DATA'
+            #else:
+            #    #print('ini mode')
+            #    temp_path = self.working_dir_loc + self.simulation_title + '_init.DATA'
+            temp_path = self.working_dir_loc + self.current_simulation_title + '.DATA'
             util.writeFile(temp_path, ecl_data_file)
 
 
-    def deleteFFile(self, tstep):
+    def deleteSimFiles(self, tstep):
 
-        file_ending = ".F"
+        file_ending_unform = ".X"
+        file_ending_form = ".F"
         temp_nr_str = ""
 
-        if (tstep + 1) <= 10:
-            temp_nr_str = "000" + str(tstep)
-        elif (tstep + 1) <= 100:
-            temp_nr_str = "00" + str(tstep)
-        elif (tstep + 1) <= 1000:
-            temp_nr_str = "0" + str(tstep)
+        if tstep == 0:
+            temp_nr_str = "0001"
         else:
-            temp_nr_str =  str(tstep)
+            if tstep > -1:
+                tstep + 1
 
-        file_ending += temp_nr_str
+            if (tstep + 1) <= 10:
+                temp_nr_str = "000" + str(tstep)
+            elif (tstep + 1) <= 100:
+                temp_nr_str = "00" + str(tstep)
+            elif (tstep + 1) <= 1000:
+                temp_nr_str = "0" + str(tstep)
+            else:
+                temp_nr_str =  str(tstep)
 
-        if tstep > 0:
+        file_ending_unform += temp_nr_str
+        file_ending_form += temp_nr_str
+
+        #if tstep > -1:
             #print('Attempting to delete file: *', file_ending, ' in timestep ', tstep)
-            path_loc = self.working_dir_loc + self.simulation_title + file_ending
-            if os.path.exists(path_loc):
-                os.remove(path_loc)
+
+        termination_list = [
+            self.working_dir_loc + self.old_simulation_title + file_ending_form,
+            self.working_dir_loc + self.old_simulation_title + file_ending_unform,
+            self.working_dir_loc + self.old_simulation_title + ".DBG",
+            self.working_dir_loc + self.old_simulation_title + ".dbprtx",
+            self.working_dir_loc + self.old_simulation_title + ".ECLEND",
+            self.working_dir_loc + self.old_simulation_title + ".ECLRUN",
+            self.working_dir_loc + self.old_simulation_title + ".GRID",
+            self.working_dir_loc + self.old_simulation_title + ".FGRID",
+            self.working_dir_loc + self.old_simulation_title + ".h5",
+            self.working_dir_loc + self.old_simulation_title + ".INIT",
+            self.working_dir_loc + self.old_simulation_title + ".FINIT",
+            self.working_dir_loc + self.old_simulation_title + ".INSPEC",
+            self.working_dir_loc + self.old_simulation_title + ".FINSPEC",
+            self.working_dir_loc + self.old_simulation_title + ".LOG",
+            self.working_dir_loc + self.old_simulation_title + ".MSG",
+            self.working_dir_loc + self.old_simulation_title + ".RSSPEC",
+            self.working_dir_loc + self.old_simulation_title + ".FRSSPEC",
+            self.working_dir_loc + self.old_simulation_title + ".SMSPEC",
+            self.working_dir_loc + self.old_simulation_title + ".FSMSPEC",
+            self.working_dir_loc + self.old_simulation_title + ".UNSMRY",
+            self.working_dir_loc + self.old_simulation_title + ".FUNSMRY",
+        ]
+        for entry in termination_list:
+            #print('Deleting: ', entry)
+            util.deleteFile(entry)
 
 
     def ExecuteECLIPSE(self, tstep, iter_step, op_mode):
@@ -318,13 +353,14 @@ class geo_sto:
 
         if os.name == 'nt':
             simulation_path = ''
-            if not op_mode == 'init':
-                simulation_path = self.working_dir_loc  + self.simulation_title + '.DATA'
-            else:
-                simulation_path = self.working_dir_loc  + self.simulation_title + '_init.DATA'
+            simulation_path = self.working_dir_loc  + self.current_simulation_title + '.DATA'
+            #if not op_mode == 'init':
+            #    simulation_path = self.working_dir_loc  + self.current_simulation_title + '.DATA'
+            #else:
+            #    simulation_path = self.working_dir_loc  + self.simulation_title + '_init.DATA'
 
             if self.keep_ecl_logs == True:
-                log_file_path = self.working_dir_loc + 'log_' + self.simulation_title + '_' + str(tstep) + '_' + str(iter_step) + '.txt'
+                log_file_path = self.working_dir_loc + 'log_' + self.current_simulation_title + '_' + str(tstep) + '_' + str(iter_step) + '.txt'
             else:
                 log_file_path = 'NUL'
             temp = 'eclrun ' + self.simulator + ' ' + simulation_path + ' >' + log_file_path
@@ -348,10 +384,11 @@ class geo_sto:
         '''
 
         #first read the results file
-        if not current_op_mode == 'init':
-            filename = self.working_dir_loc + self.simulation_title + '.RSM'
-        else:
-            filename = self.working_dir_loc + self.simulation_title + '_init.RSM'
+        #if not current_op_mode == 'init':
+        #    filename = self.working_dir_loc + self.simulation_title + '.RSM'
+        #else:
+        #    filename = self.working_dir_loc + self.simulation_title + '_init.RSM'
+        filename = self.working_dir_loc + self.current_simulation_title + '.RSM'
         results = util.getFile(filename)
         #sort the rsm data to a more uniform dataset
         reorderd_rsm_data = self.rearrangeRSMDataArray(results)

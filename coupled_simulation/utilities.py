@@ -7,6 +7,8 @@ __author__ = "wtp, witte"
 
 """
 
+import os
+
 def cleanControlFileList(a_list):
     '''
     Function to delete empty rows and whitespaces from an xml-style list
@@ -135,7 +137,9 @@ def contractDataArray(input):
     
     return output
 
-
+def deleteFile(path_to_file):
+    if os.path.exists(path_to_file):
+        os.remove(path_to_file)
 
 def searchSection(data_list, section):
     '''

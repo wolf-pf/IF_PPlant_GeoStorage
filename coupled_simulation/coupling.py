@@ -42,12 +42,16 @@ def __main__(argv):
     except getopt.GetoptError:
         print('test.py -i <inputpath>')
         sys.exit(2)
+    print(opts)
+    print(argv)
     for opt, arg in opts:
         if opt == '-h':
             print('test.py -i <inputpath>')
             sys.exit()
         elif opt in ("-i", "--ipath"):
             path = arg
+
+    print(path)
 
     if path[0] == "r":
         path = path[1:]
@@ -71,10 +75,11 @@ def __main__(argv):
     # create instances for power plant and storage
     geostorage = gs.geo_sto(cd)
 
-    #min_well_depth = min(geostorage.well_depths)
-    min_well_depth = 700 #read this from file later!
+    min_well_depth = min(geostorage.well_depths)
+    #min_well_depth = 700 #read this from file later!
 
-    powerplant = pp.model(cd, min_well_depth)
+    powerplant = pp.model(cd, min_well_depth, len(geostorage.well_names), max(geostorage.well_upper_BHP), min(geostorage.well_lower_BHP))
+    #powerplant = pp.model(cd, min_well_depth, 9, 80, 40)
 
     print('######################################################################')
     print('Reading input time series...')
@@ -103,7 +108,7 @@ def __main__(argv):
     print('######################################################################')
     p0 = 0.0 #old pressure (from last time step / iter)
     # get initial pressure before the time loop
-    p0, dummy_flow = geostorage.CallStorageSimulation(0.0, 0, 0, cd, 'init')
+    p0, dummy_flow = geostorage.CallStorageSimulation(0.0, -1, 0, cd, 'init')
     print('Simulation initialzation completed.')
     print('######################################################################')
 
@@ -125,7 +130,7 @@ def __main__(argv):
         # save last pressure (p1) for next time step as p0
         p0 = p_actual
         #deleting old files
-        geostorage.deleteFFile(t_step)
+        geostorage.deleteSimFiles(t_step)
 
         # write pressure, mass flow and power to .csv
         if cd.auto_eval_output == True:
@@ -355,4 +360,4 @@ class Logger(object):
         #you might want to specify some extra behavior here.
         pass
 
-#__main__(sys.argv[1:])
+__main__(sys.argv[1:])

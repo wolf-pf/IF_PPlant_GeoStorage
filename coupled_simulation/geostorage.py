@@ -90,18 +90,22 @@ class geo_sto:
         '''
 
         #set simulation title
-        self.old_simulation_title = self.current_simulation_title
+        if iter_step == 0:
+            #print ( 'iteration: keeping title')
+            self.old_simulation_title = self.current_simulation_title
 
         if current_mode == 'init':
             self.current_simulation_title = self.simulation_title_orig + '_TSTEP_INIT'
             os.rename(self.working_dir_loc + self.simulation_title_orig  + '.DATA', self.working_dir_loc + self.current_simulation_title + '.DATA')
         else:
-            self.current_simulation_title = self.simulation_title_orig + '_TSTEP_' + str(tstep)
-            os.rename(self.working_dir_loc + self.old_simulation_title + '.DATA', self.working_dir_loc + self.current_simulation_title + '.DATA')
+            if iter_step == 0:
+                self.current_simulation_title = self.simulation_title_orig + '_TSTEP_' + str(tstep)
+                os.rename(self.working_dir_loc + self.old_simulation_title + '.DATA', self.working_dir_loc + self.current_simulation_title + '.DATA')
 
         if not current_mode == 'init':
-            print('Running storage simulation:')
-            print(self.working_dir_loc + self.current_simulation_title + '.DATA')
+            print('Running storage simulation')
+            print('Dir: ', self.working_dir_loc)
+            print('SimTitle: ', self.current_simulation_title + '.DATA')
             print('Timestep/iteration:\t\t', '%.0f'%tstep, '/', '%.0f'%iter_step)
             print('Timestep size:\t\t\t', tstepsize, '\t\ts')
             print('Target storage flowrate:\t', '%.6f'%target_flowrate, '\tkg/s')
@@ -194,7 +198,7 @@ class geo_sto:
         # open and read eclipse data file
         ecl_data_file = util.getFile(self.working_dir_loc + self.current_simulation_title + '.DATA')
         #print(self.working_dir_loc + self.simulation_title + '.DATA')
-
+        #print ('rework ecl data tstep:', timestep)
         #rearrange the entries in the saved list
         if timestep == 1:
             #look for EQUIL and RESTART keyword

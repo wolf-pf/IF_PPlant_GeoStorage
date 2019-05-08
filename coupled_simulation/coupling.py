@@ -118,10 +118,10 @@ def __main__(argv):
         current_time = datetime.timedelta(seconds=t_step * cd.t_step_length) + cd.t_start
 
         try:
-            power_target = input_ts.loc[current_time].power / 100 * 1e6
+            power_target = input_ts.loc[current_time].power * 1e6
             last_time = current_time
         except KeyError:
-            power_target = input_ts.loc[last_time].power / 100 * 1e6
+            power_target = input_ts.loc[last_time].power * 1e6
 
         # calculate pressure, mass flow and power
         p_actual, m_target, m_actual, power_actual, success,  = calc_timestep(
@@ -328,8 +328,8 @@ class coupling_data:
         date_format = '%Y-%m-%d %H:%M:%S'
         self.t_start = datetime.datetime.strptime(self.t_start, date_format)
 
-        print('Reading inputile \"' + self.scenario + '.main_ctrl.json\" '
-              'in working directory \"' + self.working_dir + '\"')
+        print('Reading inputile \"' + self.scenario + '.main_ctrl.json\" ')
+        print('in working directory \"' + self.working_dir + '\"')
 
 '''        if self.debug:
             print('DEBUG-OUTPUT for main control data')

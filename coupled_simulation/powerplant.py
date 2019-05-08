@@ -16,7 +16,7 @@ import logging
 from tespy import nwkr, logger, con, hlp
 
 logger.define_logging(
-    log_path=True, log_version=True, screen_level=logging.WARNING
+    log_path=True, log_version=True, screen_level=logging.WARNING, file_level=logging.WARNING
 )
 # %% power plant model class
 

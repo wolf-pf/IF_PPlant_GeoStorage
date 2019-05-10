@@ -171,16 +171,24 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
     """
     tstep_accepted = False
     storage_mode = ''
+    
+    target_power_tstep = power
+    power_corr = power
 
+    print('######################################################################')
+    print('######################################################################')
+    print('######################################################################')
+    print('Advancing to timestep:\t', tstep, 'Operational mode is: ', storage_mode)
+    
     if power == 0:
         m = 0
         storage_mode = 'shut-in'
     elif power < 0:
         storage_mode = 'discharging'
-        m, power = powerplant.get_mass_flow(power, p0, storage_mode)
+        m, power_corr = powerplant.get_mass_flow(power, p0, storage_mode)
     else:
         storage_mode = 'charging'
-        m, power = powerplant.get_mass_flow(power, p0, storage_mode)
+        m, power_corr = powerplant.get_mass_flow(power, p0, storage_mode)
 
     if m == 0:
         storage_mode = "shut-in"
@@ -189,13 +197,9 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
     #moved inner iteration into timestep function,
     #iterate until timestep is accepted
     p0_temp = p0
-    print('######################################################################')
-    print('######################################################################')
-    print('######################################################################')
-    print('Advancing to timestep:\t', tstep, 'Operational mode is: ', storage_mode)
+
 
     for iter_step in range(md.max_iter): #do time-specific iterations
-
 
         if tstep_accepted:
             print('Message: Timestep accepted after iteration ', iter_step - 1)
@@ -212,7 +216,7 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
         if storage_mode == 'charging' or storage_mode == 'discharging':
             # pressure check
             if abs((p0_temp - p1) / p1) > md.pressure_diff_rel or abs(p0_temp - p1) > md.pressure_diff_abs:
-                m, power = powerplant.get_mass_flow(power, p1, storage_mode)
+                m, power_corr = powerplant.get_mass_flow(power, p1, storage_mode)
                 print('Adjusting mass flow rate.')
                 print('m / m_corr\t\t', '%.6f'%m, '/', '%.6f'%m_corr, '[kg/s]')
                 print('p0_new / p1\t\t', '%.6f'%p0_temp, '/', '%.6f'%p1, '[bars]')
@@ -230,9 +234,9 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
                 print('p0_new / p1\t\t', '%.6f'%p0_temp, '/', '%.6f'%p1, '[bars]')
 
             elif abs((m - m_corr) / m_corr) > md.flow_diff_rel or abs(m - m_corr) > md.flow_diff_abs:
-                m, power = powerplant.get_power(m_corr, p1, storage_mode)
+                m, power_corr = powerplant.get_power(m_corr, p1, storage_mode)
                 tstep_accepted = True
-                print('Adjusting power to ', power)
+                print('Adjusting power to ', power_corr)
                 print('m / m_corr\t\t', '%.6f'%m, '/', '%.6f'%m_corr, '[kg/s]')
                 print('p0_new / p1\t\t', '%.6f'%p0_temp, '/', '%.6f'%p1, '[bars]')
 
@@ -240,6 +244,15 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
                 #return p1, m_corr, power
                 tstep_accepted = True
                 m = m_corr
+
+            if storage_mode == 'charging':
+                if m < powerplant.m_max_charge and p1 < p0_temp:
+                    print ('updating target power output')
+                    power = power_corr
+            elif storage_mode == 'discharging':
+                if m < powerplant.m_max_discharge and p1 > p0_temp:
+                    print ('updating target power output')
+                    power = power_corr
 
         elif storage_mode == "shut-in":
             print('Force accepting timestep b/c storage shut-in')
@@ -255,7 +268,7 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
         print('----------------------------------------------------------------------')
         print('Problem: Results in timestep ', tstep, 'did not converge, accepting last iteration result.')
 
-    return p1, m, m_corr, power, tstep_accepted
+    return p1, m, m_corr, power_corr, tstep_accepted
 
 
 def read_series(path):

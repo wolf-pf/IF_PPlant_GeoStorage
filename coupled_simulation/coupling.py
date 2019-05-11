@@ -218,8 +218,8 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
             if abs((p0_temp - p1) / p1) > md.pressure_diff_rel or abs(p0_temp - p1) > md.pressure_diff_abs:
                 m, power_corr = powerplant.get_mass_flow(power, p1, storage_mode)
                 print('Adjusting mass flow rate.')
-                print('m / m_corr\t\t', '%.6f'%m, '/', '%.6f'%m_corr, '[kg/s]')
-                print('p0_new / p1\t\t', '%.6f'%p0_temp, '/', '%.6f'%p1, '[bars]')
+                print('m_target / m_storage\t\t', '%.6f'%m, '/', '%.6f'%m_corr, '[kg/s]')
+                print('p_assumed / p_storage\t\t', '%.6f'%p0_temp, '/', '%.6f'%p1, '[bars]')
                 if m == 0:
                     print('Forcing shut-in mode as m is zero.')
                     storage_mode = 'shut-in'
@@ -227,18 +227,23 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep):
             # if pressure check is successful, mass flow check:
             # check for difference due to pressure limitations
             elif abs(m_corr) <= 1E-5:
-                power = 0
+                power_corr = 0
+                m = 0
                 tstep_accepted = True
                 print('Adjusting power to ZERO')
-                print('m / m_corr\t\t', '%.6f'%m, '/', '%.6f'%m_corr, '[kg/s]')
-                print('p0_new / p1\t\t', '%.6f'%p0_temp, '/', '%.6f'%p1, '[bars]')
+                #update storage pressure
+                p1, m_corr = geostorage.CallStorageSimulation(m, tstep, iter_step, md, storage_mode )
+                print('m_target / m_storage\t\t', '%.6f'%m, '/', '%.6f'%m_corr, '[kg/s]')
+                print('p_assumed / p_storage\t\t', '%.6f'%p0_temp, '/', '%.6f'%p1, '[bars]')
 
             elif abs((m - m_corr) / m_corr) > md.flow_diff_rel or abs(m - m_corr) > md.flow_diff_abs:
                 m, power_corr = powerplant.get_power(m_corr, p1, storage_mode)
                 tstep_accepted = True
                 print('Adjusting power to ', power_corr)
-                print('m / m_corr\t\t', '%.6f'%m, '/', '%.6f'%m_corr, '[kg/s]')
-                print('p0_new / p1\t\t', '%.6f'%p0_temp, '/', '%.6f'%p1, '[bars]')
+                #update storage pressure
+                p1, m_corr = geostorage.CallStorageSimulation(m, tstep, iter_step, md, storage_mode )
+                print('m_target / m_storage\t\t', '%.6f'%m, '/', '%.6f'%m_corr, '[kg/s]')
+                print('p_assumed / p_storage\t\t', '%.6f'%p0_temp, '/', '%.6f'%p1, '[bars]')
 
             else:
                 #return p1, m_corr, power

@@ -129,13 +129,13 @@ class geo_sto:
         ecl_results[1] = ecl_results[1] * self.surface_density
 
         if not current_mode == 'init':
-            print('----------------------------------------------------------------------')
+            print('----------------------------------------------------------------------------------------------------------------')
             print('Pressure actual:\t\t', '%.6f'%ecl_results[0], '\tbars')
             print('Flowrate actual:\t\t', '%.6f'%ecl_results[1], '\tkg/s')
             print('\t\t\t\t', '%.6f'%(ecl_results[1] / self.surface_density), '\tsm3/s')
         else:
             print('Initial pressure is: \t', '%.6f'%ecl_results[0], 'bars')
-        print('----------------------------------------------------------------------')
+        print('----------------------------------------------------------------------------------------------------------------')
         return (ecl_results[1], ecl_results[0])
 
 
@@ -221,6 +221,9 @@ class geo_sto:
                 #assemble new string for restart section
                 ecl_data_file[restart_pos + 1] =  '\'' + self.old_simulation_title + '\' \t'
                 ecl_data_file[restart_pos + 1] += str(int(self.restart_id) + timestep )  + ' /\n'
+                print('Assembled string for restart:')
+                print('\'' + self.old_simulation_title + '\'', str(int(self.restart_id) + timestep )  + ' /\n')
+                print( 'Restart id: ', self.restart_id, ' timestep: ', timestep)
 
         #now rearrange the well schedule section
         schedule_pos = util.searchSection(ecl_data_file, "WCONINJE")

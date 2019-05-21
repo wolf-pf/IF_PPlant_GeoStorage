@@ -62,12 +62,7 @@ class model:
         with open(path) as f:
             self.__dict__.update(json.load(f))
 
-        if self.create_lut == 'False':
-            self.create_lut = False
-        else:
-            self.create_lut = True
-
-        if self.method == 'tespy' or self.create_lut:
+        if self.method == 'tespy' or self.create_lut is True:
             # well information
             self.min_well_depth = min_well_depth
             self.num_wells = num_wells
@@ -78,7 +73,7 @@ class model:
 
             self.load_tespy_model()
 
-            if self.create_lut:
+            if self.create_lut is True:
                 # create lookup table from tespy model
                 self.lut_charge_path = self.wdir + self.sc + '_lut_charge.csv'
                 self.lut_discharge_path = self.wdir + self.sc + '_lut_discharge.csv'
@@ -220,7 +215,7 @@ class model:
                     power += [self.tespy_discharge.imp_busses[self.power_bus_discharge].P.val]
                     heat += [self.tespy_discharge.imp_busses[self.heat_bus_discharge].P.val]
 
-            df.loc[m] = P
+            df.loc[m] = power
             df_heat.loc[m] = heat
 
         df.to_csv(self.wdir + self.sc + '_lut_discharge_power.csv')

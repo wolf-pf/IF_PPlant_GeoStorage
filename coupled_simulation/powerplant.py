@@ -62,12 +62,7 @@ class model:
         with open(path) as f:
             self.__dict__.update(json.load(f))
 
-        if self.create_lut == 'False':
-            self.create_lut = False
-        else:
-            self.create_lut = True
-
-        if self.method == 'tespy' or self.create_lut:
+        if self.method == 'tespy' or self.create_lut is True:
             # well information
             self.min_well_depth = min_well_depth
             self.num_wells = num_wells
@@ -78,7 +73,7 @@ class model:
 
             self.load_tespy_model()
 
-            if self.create_lut:
+            if self.create_lut is True:
                 # create lookup table from tespy model
                 self.lut_charge_path = self.wdir + self.sc + '_lut_charge.csv'
                 self.lut_discharge_path = self.wdir + self.sc + '_lut_discharge.csv'
@@ -170,10 +165,12 @@ class model:
         pressure_range = np.linspace(self.p_min, self.p_max, grid_num)[::-1]
 
         df = pd.DataFrame(columns=pressure_range)
+        df_heat = pd.DataFrame(columns=pressure_range)
         self.tespy_charge.imp_busses[self.power_bus_charge].set_attr(P=np.nan)
 
         for m in m_range:
-            P = []
+            power = []
+            heat = []
             self.tespy_charge.imp_conns[self.massflow_conn_charge].set_attr(m=m)
             for p in pressure_range:
                 self.tespy_charge.imp_conns[self.pressure_conn_charge].set_attr(p=p)
@@ -183,11 +180,14 @@ class model:
                     logging.error(msg)
                     raise hlp.TESPyNetworkError(msg)
                 else:
-                    P += [self.tespy_charge.imp_busses[self.power_bus_charge].P.val]
+                    power += [self.tespy_charge.imp_busses[self.power_bus_charge].P.val]
+                    heat += [self.tespy_charge.imp_busses[self.heat_bus_charge].P.val]
 
-            df.loc[m] = P
+            df.loc[m] = power
+            df_heat.loc[m] = heat
 
-        df.to_csv(self.wdir + self.sc + '_lut_charge.csv')
+        df.to_csv(self.wdir + self.sc + '_lut_charge_power.csv')
+        df_heat.to_csv(self.wdir + self.sc + '_lut_charge_heat.csv')
 
         # discharging
         msg = 'Generating lookup table for charging from TESPy power plant model.'
@@ -197,10 +197,12 @@ class model:
         pressure_range = np.linspace(self.p_min, self.p_max, grid_num)[::-1]
 
         df = pd.DataFrame(columns=pressure_range)
+        df_heat = pd.DataFrame(columns=pressure_range)
         self.tespy_discharge.imp_busses[self.power_bus_discharge].set_attr(P=np.nan)
 
         for m in m_range:
-            P = []
+            power = []
+            heat = []
             self.tespy_discharge.imp_conns[self.massflow_conn_discharge].set_attr(m=m)
             for p in pressure_range:
                 self.tespy_discharge.imp_conns[self.pressure_conn_discharge].set_attr(p=p)
@@ -210,11 +212,14 @@ class model:
                     logging.error(msg)
                     raise hlp.TESPyNetworkError(msg)
                 else:
-                    P += [self.tespy_discharge.imp_busses[self.power_bus_discharge].P.val]
+                    power += [self.tespy_discharge.imp_busses[self.power_bus_discharge].P.val]
+                    heat += [self.tespy_discharge.imp_busses[self.heat_bus_discharge].P.val]
 
-            df.loc[m] = P
+            df.loc[m] = power
+            df_heat.loc[m] = heat
 
-        df.to_csv(self.wdir + self.sc + '_lut_discharge.csv')
+        df.to_csv(self.wdir + self.sc + '_lut_discharge_power.csv')
+        df_heat.to_csv(self.wdir + self.sc + '_lut_discharge_heat.csv')
 
     def get_mass_flow(self, power, pressure, mode):
         """
@@ -254,7 +259,7 @@ class model:
             if mode == 'charging':
                 # if power too small
                 if abs(power) < abs(self.power_nominal_charge / 100):
-                    return 0, 0
+                    return 0, 0, 0
 
                 design_path = self.wdir + self.sc + '_charge_design'
                 # set power of bus
@@ -266,17 +271,18 @@ class model:
                 try:
                     self.tespy_charge.solve(mode='offdesign', design_path=design_path, path_abs=True)
                     m = self.tespy_charge.imp_conns[self.massflow_conn_charge].m.val_SI
+                    heat = self.tespy_charge.imp_busses[self.heat_bus_charge].P.val
 
                     if self.tespy_charge.res[-1] > 1e-3:
                         msg = 'Could not find a solution for input pair power=' + str(power) + ' pressure=' + str(pressure) + '.'
                         print(msg)
                         logging.error(msg)
-                        return 0, 0
+                        return 0, 0, 0
                     elif m < self.m_min_charge:
                         msg = 'Mass flow for input pair power=' + str(power) + ' pressure=' + str(pressure) + ' below minimum mass flow.'
                         print(msg)
                         logging.error(msg)
-                        return 0, 0
+                        return 0, 0, 0
                     elif m > self.m_max_charge:
                         msg = 'Mass flow for input pair power=' + str(power) + ' pressure=' + str(pressure) + ' above maximum mass flow. Adjusting power to match maximum allowed mass flow.'
                         print(msg)
@@ -286,18 +292,18 @@ class model:
                         msg = 'Calculation successful for power=' + str(power) + ' pressure=' + str(pressure) + '. Mass flow=' + str(m) + '.'
                         print(msg)
                         logging.debug(msg)
-                        return m, power
+                        return m, power, heat
 
                 except:
                     # except general errors in calculation
                     msg = 'Could not find a solution for input pair power=' + str(power) + ' pressure=' + str(pressure) + '.'
                     print(msg)
                     logging.error(msg)
-                    return 0, 0
+                    return 0, 0, 0
 
             elif mode == 'discharging':
                 if abs(power) < abs(self.power_nominal_discharge / 100):
-                    return 0, 0
+                    return 0, 0, 0
 
                 design_path = self.wdir + self.sc + '_discharge_design'
                 # set power of bus
@@ -309,17 +315,18 @@ class model:
                 try:
                     self.tespy_discharge.solve(mode='offdesign', design_path=design_path, path_abs=True)
                     m = self.tespy_discharge.imp_conns[self.massflow_conn_discharge].m.val_SI
+                    heat = self.tespy_discharge.imp_busses[self.heat_bus_discharge].P.val
 
                     if self.tespy_discharge.res[-1] > 1e-3:
                         msg = 'Could not find a solution for input pair power=' + str(power) + ' pressure=' + str(pressure) + '.'
                         print(msg)
                         logging.error(msg)
-                        return 0, 0
+                        return 0, 0, 0
                     elif m < self.m_min_discharge:
                         msg = 'Mass flow for input pair power=' + str(power) + ' pressure=' + str(pressure) + ' below minimum mass flow.'
                         print(msg)
                         logging.error(msg)
-                        return 0, 0
+                        return 0, 0, 0
                     elif m > self.m_max_discharge:
                         msg = 'Mass flow for input pair power=' + str(power) + ' pressure=' + str(pressure) + ' above maximum mass flow. Adjusting power to match maximum allowed mass flow.'
                         print(msg)
@@ -329,14 +336,14 @@ class model:
                         msg = 'Calculation successful for power=' + str(power) + ' pressure=' + str(pressure) + '. Mass flow=' + str(m) + '.'
                         print(msg)
                         logging.debug(msg)
-                        return m, power
+                        return m, power, heat
 
                 except:
                     # except general errors in calculation
                     msg = 'Could not find a solution for input pair power=' + str(power) + ' pressure=' + str(pressure) + '.'
                     print(msg)
                     logging.error(msg)
-                    return 0, 0
+                    return 0, 0, 0
 
             else:
                 raise ValueError('Mode must be charging or discharging.')
@@ -424,11 +431,11 @@ class model:
         if pressure + 1e-4 < self.p_min:
             msg = 'Pressure is below minimum pressure: min=' + str(self.p_min) + ', value=' + str(pressure) + '.'
             logging.error(msg)
-            return 0, 0
+            return 0, 0, 0
         if pressure - 1e-4 > self.p_max:
             msg = 'Pressure is above maximum pressure: max=' + str(self.p_max) + ', value=' + str(pressure) + '.'
             logging.error(msg)
-            return 0, 0
+            return 0, 0, 0
 
         if self.method == 'tespy':
             if mode == 'charging':
@@ -436,7 +443,7 @@ class model:
                     msg = 'Mass flow is below minimum mass flow, shutting down power plant.'
                     print(msg)
                     logging.error(msg)
-                    return 0, 0
+                    return 0, 0, 0
                 elif mass_flow > self.m_max_charge + 1e-4:
                     msg = 'Mass flow above maximum mass flow. Adjusting mass flow to maximum allowed mass flow.'
                     print(msg)
@@ -454,17 +461,18 @@ class model:
                 self.tespy_charge.solve(mode='offdesign', design_path=design_path, path_abs=True)
 
                 power = self.tespy_charge.imp_busses[self.power_bus_charge].P.val
+                heat = self.tespy_charge.imp_busses[self.heat_bus_charge].P.val
                 msg = 'Calculation successful for mass flow=' + str(mass_flow) + ' pressure=' + str(pressure) + '. Power=' + str(power) + '.'
                 print(msg)
                 logging.debug(msg)
-                return mass_flow, power
+                return mass_flow, power, heat
 
             elif mode == 'discharging':
                 if mass_flow < self.m_min_discharge - 1e-4:
                     msg = 'Mass flow is below minimum mass flow, shutting down power plant.'
                     print(msg)
                     logging.error(msg)
-                    return 0, 0
+                    return 0, 0, 0
                 elif mass_flow > self.m_max_discharge + 1e-4:
                     msg = 'Mass flow above maximum mass flow. Adjusting mass flow to maximum allowed mass flow.'
                     print(msg)
@@ -482,11 +490,12 @@ class model:
                 self.tespy_discharge.solve(mode='offdesign', design_path=design_path, path_abs=True)
 
                 power = self.tespy_discharge.imp_busses[self.power_bus_discharge].P.val
+                heat = self.tespy_discharge.imp_busses[self.heat_bus_discharge].P.val
                 msg = 'Calculation successful for mass flow=' + str(mass_flow) + ' pressure=' + str(pressure) + '. Power=' + str(power) + '.'
                 print(msg)
                 logging.debug(msg)
 
-                return mass_flow, power
+                return mass_flow, power, heat
 
             else:
                 raise ValueError('Mode must be charge or discharge.')

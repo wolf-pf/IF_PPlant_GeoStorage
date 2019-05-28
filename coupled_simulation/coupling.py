@@ -91,9 +91,9 @@ def __main__(argv):
     print('Preparing output data structures...')
     variable_list = []
     if cd.auto_eval_output == True:
-        variable_list = ['time', 'power_target', 'massflow_target', 'power_actual', 'massflow_actual','storage_pressure', 'Tstep_accepted', 'delta_power', 'delta_massflow' ]
+        variable_list = ['time', 'power_target', 'massflow_target', 'power_actual', 'heat', 'massflow_actual','storage_pressure', 'Tstep_accepted', 'delta_power', 'delta_massflow' ]
     else:
-        variable_list = ['time', 'power_target', 'massflow_target', 'power_actual', 'massflow_actual', 'storage_pressure' ]
+        variable_list = ['time', 'power_target', 'massflow_target', 'power_actual', 'heat', 'massflow_actual', 'storage_pressure' ]
     #one output line per timestep...
     output_ts = pd.DataFrame(index=np.arange(0, cd.t_steps_total),columns=variable_list)
 
@@ -122,7 +122,7 @@ def __main__(argv):
 
         current_time = datetime.timedelta(seconds=t_step * cd.t_step_length) + cd.t_start
 
-        
+
 
         try:
             power_target = input_ts.loc[current_time].power * 1e6
@@ -133,7 +133,7 @@ def __main__(argv):
         print('################################################################################################################')
         print('################################################################################################################')
         print('################################################################################################################')
-    
+
         print('Advancing to timestep:\t', t_step)
         print('Target power output for this time step is: ','%.3f'%power_target)
         sys.stdout.flush()
@@ -160,10 +160,10 @@ def __main__(argv):
             delta_power = abs(power_actual) - abs(power_target)
             delta_massflow = abs(m_actual) - abs(m_target)
 
-            output_ts.loc[t_step] = np.array([current_time, power_target, m_target, power_actual, m_actual,
+            output_ts.loc[t_step] = np.array([current_time, power_target, m_target, power_actual, heat, m_actual,
                                                     p_actual, success, delta_power, delta_massflow])
         else:
-            output_ts.loc[t_step] = np.array([current_time, power_target, m_target, power_actual, m_actual,
+            output_ts.loc[t_step] = np.array([current_time, power_target, m_target, power_actual, heat, m_actual,
                                                     p_actual])
 
         #Logger.flush()
@@ -203,14 +203,15 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep, pp_off):
     #initilizing variables
     target_power_tstep = power
     power_corr = power
+    heat = 0.0
     p_delta_limit = 0.0
     p_limit = 0.0
-    
+
     delta_m_iter = 0.0
     delta_m_iter_rel = 0.0
     delta_p_iter = 0.0
     delta_p_iter_rel = 0.0
-    
+
     if power == 0.0: #matching float values, potentionally dangerous
         m = 0.0
         storage_mode = 'shut-in'
@@ -223,7 +224,7 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep, pp_off):
 
     print('Operational mode of the system is is: ', storage_mode)
     sys.stdout.flush()
-    
+
 
     #moved inner iteration into timestep function,
     #iterate until timestep is accepted
@@ -249,14 +250,14 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep, pp_off):
         else:
             #run power plant model to get target flow rate
             print ('Running power plant model')
-            m, power_corr = powerplant.get_mass_flow(power, p1, storage_mode)
+            m, power_corr, heat = powerplant.get_mass_flow(power, p1, storage_mode)
 
         #if target mass flow is zero, set storage mode to shut-in
         if m == 0.0:    #matching float values, potentionally dangerous
             storage_mode = 'shut-in'
             power_corr = 0.0
         print('----------------------------------------------------------------------------------------------------------------')
-        
+
         #get pressure for the given target rate and the actually achieved flow rate from storage simulation
         p1, m_corr = geostorage.CallStorageSimulation(m, tstep, iter_step, md, storage_mode )
 
@@ -289,7 +290,7 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep, pp_off):
             if p_delta_limit >= md.pressure_change_restart:
                 print ('...restarting power plant.' )
                 pp_off = False
-            
+
             sys.stdout.flush()
         print( 'Summary of iteration:')
         print('m_target / m_storage\t\t', '%.6f'%m, '/', '%.6f'%m_corr, '[kg/s]')
@@ -299,15 +300,15 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep, pp_off):
             # pressure check
             if delta_p_iter_rel > md.pressure_diff_rel or delta_p_iter > md.pressure_diff_abs:
                 print('Adjusting mass flow rate due to storage pressure difference.')
-                m, power_corr = powerplant.get_mass_flow(power, p1, storage_mode)
+                m, power_corr, heat = powerplant.get_mass_flow(power, p1, storage_mode)
                 if m == 0:
                     print('Forcing shut-in mode as m is zero.')
                     storage_mode = 'shut-in'
                 sys.stdout.flush()
-            
+
             elif delta_m_iter_rel > md.flow_diff_rel or  delta_m_iter > md.flow_diff_abs:
                 print('Storage pressure converged and mass flow is not...')
-                m, power_corr = powerplant.get_power(m_corr, p1, storage_mode)
+                m, power_corr, heat = powerplant.get_power(m_corr, p1, storage_mode)
                 m = m_corr
                 print('Adjusting power to ', power_corr)
                 if power_corr == 0.0:
@@ -357,7 +358,7 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep, pp_off):
         print('----------------------------------------------------------------------------------------------------------------')
         print('Problem: Results in timestep ', tstep, 'did not converge, accepting last iteration result.')
     sys.stdout.flush()
-    return p1, m, m_corr, power_corr, tstep_accepted, pp_off
+    return p1, m, m_corr, power_corr, heat, tstep_accepted, pp_off
 
 
 def read_series(path):

@@ -153,7 +153,7 @@ def __main__(argv):
         # save last pressure (p1) for next time step as p0
         p0 = p_actual
         #deleting old files
-        #geostorage.deleteSimFiles(t_step)
+        geostorage.deleteSimFiles(t_step)
 
         # write pressure, mass flow and power to .csv
         if cd.auto_eval_output == True:
@@ -171,7 +171,7 @@ def __main__(argv):
         #sys.stdout.flush() #force flush of output
 
         #if t_step % cd.save_nth_t_step == 0:
-        output_ts.to_csv(cd.working_dir + cd.output_timeseries_path, index=False)
+        output_ts.to_csv(cd.working_dir + cd.output_timeseries_path, index=False, sep=';')
 
         #save old power target
         power_target_t0 = power_target
@@ -265,13 +265,14 @@ def calc_timestep(powerplant, geostorage, power, p0, md, tstep, pp_off):
         delta_p_iter = abs(p1 - p0_temp)
         delta_p_iter_rel = delta_p_iter / p1
 
-        #evaluate flow rate difference
-        if pp_off == False:
-            delta_m_iter = abs(m_corr - m)
-            delta_m_iter_rel = delta_m_iter / m_corr
-        else:
-            delta_m_iter = 0.0
-            delta_m_iter_rel = 0.0
+        if storage_mode == 'charging' or storage_mode == 'discharging':
+            #evaluate flow rate difference
+            if pp_off == False:
+                delta_m_iter = abs(m_corr - m)
+                delta_m_iter_rel = delta_m_iter / m_corr
+            else:
+                delta_m_iter = 0.0
+                delta_m_iter_rel = 0.0
 
         if pp_off == True:
             print ('Power plant shut-off, testing pressure difference...')
@@ -369,9 +370,11 @@ def read_series(path):
     :type path: str
     :returns: ts (*pandas.DataFrame*) - dataframe containing the time series
     """
-    ts = pd.read_csv(path, delimiter=',', decimal='.')
-    ts = ts.set_index(pd.to_datetime(ts.index, unit='h'))
+    ts = pd.read_csv(path, delimiter=';', decimal='.')
+    ts = ts.set_index('timeindex')
+    ts.index = pd.to_datetime(ts.index)
     ts['power'] = ts['input'] - ts['output']
+ 
     return ts
 
 

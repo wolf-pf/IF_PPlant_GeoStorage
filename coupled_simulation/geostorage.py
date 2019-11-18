@@ -67,7 +67,7 @@ class geo_sto:
             flowrate, pressure = self.RunECLIPSE(target_flow, tstep, iter_step, coupling_data.t_step_length, op_mode)
         elif self.simulator == 'proxy':
             pass
-            #implement later
+            #implement later (that is you firdovsi...)
         else:
             print('ERROR: simulator flag not understood. Is: ', self.simulator)
 
@@ -148,9 +148,10 @@ class geo_sto:
         :returns: returns a clearer version of the input list (type: list of strings)
         '''
         # function to re-order / get rid off line breaks etc. in input
-        break_count = util.getStringCount(rsm_list, 'SUMMARY OF RUN')
+        #break_count = util.getStringCount(rsm_list, 'SUMMARY OF RUN')
+        
         break_positions = util.getStringPositions(rsm_list, 'SUMMARY OF RUN')
-        #break_positions = [i for i, s in enumerate(rsm_list) if 'SUMMARY OF RUN' in s]
+        break_count = len(break_positions)
 
         if break_count > 0:
             interval = break_positions[1] - break_positions[0]
@@ -372,7 +373,7 @@ class geo_sto:
                 log_file_path = 'NUL'
             temp = 'eclrun ' + self.simulator + ' ' + simulation_path + ' >' + log_file_path
             os.system(temp)
-        #elif os.name == 'posix':
+        #elif os.name == 'posix': #Firdovsi can do this
             #log_output_loc += ' &'
             #rc = subprocess.call(['eclrun', simulator_loc, simulation_title_loc, '>', log_output_loc])
 
@@ -397,6 +398,7 @@ class geo_sto:
         #    filename = self.working_dir_loc + self.simulation_title + '_init.RSM'
         filename = self.working_dir_loc + self.current_simulation_title + '.RSM'
         results = util.getFile(filename)
+        #print(results)
         #sort the rsm data to a more uniform dataset
         reorderd_rsm_data = self.rearrangeRSMDataArray(results)
         #print(reorderd_rsm_data)

@@ -13,7 +13,10 @@ import numpy as np
 import json
 from scipy import interpolate
 import logging
-from tespy import nwkr, logger, con, hlp
+from tespy.networks import load_network
+from tespy.tools import logger
+from tespy.connections import ref
+from tespy.tools.helpers import TESPyNetworkError
 
 logger.define_logging(
     log_path=True, log_version=True, screen_level=logging.WARNING, file_level=logging.WARNING
@@ -90,9 +93,9 @@ class model:
     def load_tespy_model(self):
 
         # load tespy models with the network_reader module
-        self.tespy_charge = nwkr.load_nwk(self.wdir + self.tespy_charge_path)
+        self.tespy_charge = load_network(self.wdir + self.tespy_charge_path)
         self.tespy_charge.set_printoptions(print_level='none')
-        self.tespy_discharge = nwkr.load_nwk(self.wdir + self.tespy_discharge_path)
+        self.tespy_discharge = load_network(self.wdir + self.tespy_discharge_path)
         self.tespy_discharge.set_printoptions(print_level='none')
 
         self.power_plant_layout()
@@ -121,7 +124,7 @@ class model:
         self.tespy_charge.imp_busses[self.power_bus_charge].set_attr(P=self.power_nominal_charge)
         self.tespy_charge.imp_conns[self.pressure_conn_charge].set_attr(
                 p=self.pressure_nominal_charge,
-                m=con.ref(self.tespy_charge.imp_conns[self.massflow_conn_charge], 1 / self.num_wells, 0))
+                m=ref(self.tespy_charge.imp_conns[self.massflow_conn_charge], 1 / self.num_wells, 0))
         self.tespy_charge.imp_conns[self.massflow_conn_charge].set_attr(m=np.nan)
         self.tespy_charge.imp_comps[self.pipe_charge].set_attr(L=self.min_well_depth)
         self.tespy_charge.solve('design')
@@ -138,7 +141,7 @@ class model:
         self.tespy_discharge.imp_busses[self.power_bus_discharge].set_attr(P=self.power_nominal_discharge)
         self.tespy_discharge.imp_conns[self.pressure_conn_discharge].set_attr(
                 p=self.pressure_nominal_discharge,
-                m=con.ref(self.tespy_discharge.imp_conns[self.massflow_conn_discharge], 1 / self.num_wells, 0))
+                m=ref(self.tespy_discharge.imp_conns[self.massflow_conn_discharge], 1 / self.num_wells, 0))
         self.tespy_discharge.imp_conns[self.massflow_conn_discharge].set_attr(m=np.nan)
         self.tespy_charge.imp_comps[self.pipe_discharge].set_attr(L=self.min_well_depth)
         self.tespy_discharge.solve('design')
@@ -178,7 +181,7 @@ class model:
                 if self.tespy_charge.res[-1] > 1e-3:
                     msg = 'Error on lookup table creation: Could not find a solution for input pair: mass flow=' + str(round(m, 1)) + ', pressure=' + str(round(p, 3)) + '.'
                     logging.error(msg)
-                    raise hlp.TESPyNetworkError(msg)
+                    raise TESPyNetworkError(msg)
                 else:
                     power += [self.tespy_charge.imp_busses[self.power_bus_charge].P.val]
                     heat += [self.tespy_charge.imp_busses[self.heat_bus_charge].P.val]
@@ -210,7 +213,7 @@ class model:
                 if self.tespy_discharge.res[-1] > 1e-3:
                     msg = 'Error on lookup table creation: Could not find a solution for input pair: mass flow=' + str(round(m, 1)) + ', pressure=' + str(round(p, 3)) + '.'
                     logging.error(msg)
-                    raise hlp.TESPyNetworkError(msg)
+                    raise TESPyNetworkError(msg)
                 else:
                     power += [self.tespy_discharge.imp_busses[self.power_bus_discharge].P.val]
                     heat += [self.tespy_discharge.imp_busses[self.heat_bus_discharge].P.val]

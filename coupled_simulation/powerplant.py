@@ -94,9 +94,11 @@ class model:
 
         # load tespy models with the network_reader module
         self.tespy_charge = load_network(self.wdir + self.tespy_charge_path)
-        self.tespy_charge.set_printoptions(print_level='none')
+        self.tespy_charge.set_attr(iterinfo=False)
+        self.tespy_charge.solve('design', init_only=True)
         self.tespy_discharge = load_network(self.wdir + self.tespy_discharge_path)
-        self.tespy_discharge.set_printoptions(print_level='none')
+        self.tespy_discharge.set_attr(iterinfo=False)
+        self.tespy_discharge.solve('design', init_only=True)
 
         self.power_plant_layout()
 
@@ -121,15 +123,15 @@ class model:
         msg = 'Starting power plant layout calculation, compressor part.'
         logging.debug(msg)
         # charging
-        self.tespy_charge.imp_busses[self.power_bus_charge].set_attr(P=self.power_nominal_charge)
-        self.tespy_charge.imp_conns[self.pressure_conn_charge].set_attr(
+        self.tespy_charge.busses[self.power_bus_charge].set_attr(P=self.power_nominal_charge)
+        self.tespy_charge.connections[self.pressure_conn_charge].set_attr(
                 p=self.pressure_nominal_charge,
-                m=ref(self.tespy_charge.imp_conns[self.massflow_conn_charge], 1 / self.num_wells, 0))
-        self.tespy_charge.imp_conns[self.massflow_conn_charge].set_attr(m=np.nan)
-        self.tespy_charge.imp_comps[self.pipe_charge].set_attr(L=self.min_well_depth)
+                m=ref(self.tespy_charge.connections[self.massflow_conn_charge], 1 / self.num_wells, 0))
+        self.tespy_charge.connections[self.massflow_conn_charge].set_attr(m=np.nan)
+        self.tespy_charge.components[self.pipe_charge].set_attr(L=self.min_well_depth)
         self.tespy_charge.solve('design')
         self.tespy_charge.save(self.wdir + self.sc + '_charge_design')
-        self.m_nom_charge = self.tespy_charge.imp_conns[self.massflow_conn_charge].m.val_SI
+        self.m_nom_charge = self.tespy_charge.connections[self.massflow_conn_charge].m.val_SI
         self.m_min_charge = self.m_nom_charge * self.massflow_min_rel
         self.m_max_charge = self.m_nom_charge * self.massflow_max_rel
         msg = 'Nominal mass flow for charging is ' + str(self.m_nom_charge) + ' at nominal power ' + str(self.power_nominal_charge) + ' and nominal pressure ' + str(self.pressure_nominal_charge) + '.'
@@ -138,15 +140,15 @@ class model:
         msg = 'Starting power plant layout calculation, turbine part.'
         logging.debug(msg)
         # discharging
-        self.tespy_discharge.imp_busses[self.power_bus_discharge].set_attr(P=self.power_nominal_discharge)
-        self.tespy_discharge.imp_conns[self.pressure_conn_discharge].set_attr(
+        self.tespy_discharge.busses[self.power_bus_discharge].set_attr(P=self.power_nominal_discharge)
+        self.tespy_discharge.connections[self.pressure_conn_discharge].set_attr(
                 p=self.pressure_nominal_discharge,
-                m=ref(self.tespy_discharge.imp_conns[self.massflow_conn_discharge], 1 / self.num_wells, 0))
-        self.tespy_discharge.imp_conns[self.massflow_conn_discharge].set_attr(m=np.nan)
-        self.tespy_charge.imp_comps[self.pipe_discharge].set_attr(L=self.min_well_depth)
+                m=ref(self.tespy_discharge.connections[self.massflow_conn_discharge], 1 / self.num_wells, 0))
+        self.tespy_discharge.connections[self.massflow_conn_discharge].set_attr(m=np.nan)
+        self.tespy_charge.components[self.pipe_discharge].set_attr(L=self.min_well_depth)
         self.tespy_discharge.solve('design')
         self.tespy_discharge.save(self.wdir + self.sc + '_discharge_design')
-        self.m_nom_discharge = self.tespy_discharge.imp_conns[self.massflow_conn_discharge].m.val_SI
+        self.m_nom_discharge = self.tespy_discharge.connections[self.massflow_conn_discharge].m.val_SI
         self.m_min_discharge = self.m_nom_discharge * self.massflow_min_rel
         self.m_max_discharge = self.m_nom_discharge * self.massflow_max_rel
         msg = 'Nominal mass flow for discharging is ' + str(self.m_nom_discharge) + ' at nominal power ' + str(self.power_nominal_discharge) + ' and nominal pressure ' + str(self.pressure_nominal_discharge) + '.'
@@ -169,22 +171,22 @@ class model:
 
         df = pd.DataFrame(columns=pressure_range)
         df_heat = pd.DataFrame(columns=pressure_range)
-        self.tespy_charge.imp_busses[self.power_bus_charge].set_attr(P=np.nan)
+        self.tespy_charge.busses[self.power_bus_charge].set_attr(P=np.nan)
 
         for m in m_range:
             power = []
             heat = []
-            self.tespy_charge.imp_conns[self.massflow_conn_charge].set_attr(m=m)
+            self.tespy_charge.connections[self.massflow_conn_charge].set_attr(m=m)
             for p in pressure_range:
-                self.tespy_charge.imp_conns[self.pressure_conn_charge].set_attr(p=p)
+                self.tespy_charge.connections[self.pressure_conn_charge].set_attr(p=p)
                 self.tespy_charge.solve(mode='offdesign', design_path=self.wdir + self.sc + '_charge_design')
                 if self.tespy_charge.res[-1] > 1e-3:
                     msg = 'Error on lookup table creation: Could not find a solution for input pair: mass flow=' + str(round(m, 1)) + ', pressure=' + str(round(p, 3)) + '.'
                     logging.error(msg)
                     raise TESPyNetworkError(msg)
                 else:
-                    power += [self.tespy_charge.imp_busses[self.power_bus_charge].P.val]
-                    heat += [self.tespy_charge.imp_busses[self.heat_bus_charge].P.val]
+                    power += [self.tespy_charge.busses[self.power_bus_charge].P.val]
+                    heat += [self.tespy_charge.busses[self.heat_bus_charge].P.val]
 
             df.loc[m] = power
             df_heat.loc[m] = heat
@@ -201,22 +203,22 @@ class model:
 
         df = pd.DataFrame(columns=pressure_range)
         df_heat = pd.DataFrame(columns=pressure_range)
-        self.tespy_discharge.imp_busses[self.power_bus_discharge].set_attr(P=np.nan)
+        self.tespy_discharge.busses[self.power_bus_discharge].set_attr(P=np.nan)
 
         for m in m_range:
             power = []
             heat = []
-            self.tespy_discharge.imp_conns[self.massflow_conn_discharge].set_attr(m=m)
+            self.tespy_discharge.connections[self.massflow_conn_discharge].set_attr(m=m)
             for p in pressure_range:
-                self.tespy_discharge.imp_conns[self.pressure_conn_discharge].set_attr(p=p)
+                self.tespy_discharge.connections[self.pressure_conn_discharge].set_attr(p=p)
                 self.tespy_discharge.solve(mode='offdesign', design_path=self.wdir + self.sc + '_discharge_design')
                 if self.tespy_discharge.res[-1] > 1e-3:
                     msg = 'Error on lookup table creation: Could not find a solution for input pair: mass flow=' + str(round(m, 1)) + ', pressure=' + str(round(p, 3)) + '.'
                     logging.error(msg)
                     raise TESPyNetworkError(msg)
                 else:
-                    power += [self.tespy_discharge.imp_busses[self.power_bus_discharge].P.val]
-                    heat += [self.tespy_discharge.imp_busses[self.heat_bus_discharge].P.val]
+                    power += [self.tespy_discharge.busses[self.power_bus_discharge].P.val]
+                    heat += [self.tespy_discharge.busses[self.heat_bus_discharge].P.val]
 
             df.loc[m] = power
             df_heat.loc[m] = heat
@@ -269,15 +271,15 @@ class model:
 
                 design_path = self.wdir + self.sc + '_charge_design'
                 # set power of bus
-                self.tespy_charge.imp_busses[self.power_bus_charge].set_attr(P=power)
+                self.tespy_charge.busses[self.power_bus_charge].set_attr(P=power)
                 # set pressure at interface
-                self.tespy_charge.imp_conns[self.pressure_conn_charge].set_attr(p=pressure)
-                self.tespy_charge.imp_conns[self.massflow_conn_charge].set_attr(m=np.nan)
+                self.tespy_charge.connections[self.pressure_conn_charge].set_attr(p=pressure)
+                self.tespy_charge.connections[self.massflow_conn_charge].set_attr(m=np.nan)
 
                 try:
                     self.tespy_charge.solve(mode='offdesign', design_path=design_path)
-                    m = self.tespy_charge.imp_conns[self.massflow_conn_charge].m.val_SI
-                    heat = self.tespy_charge.imp_busses[self.heat_bus_charge].P.val
+                    m = self.tespy_charge.connections[self.massflow_conn_charge].m.val_SI
+                    heat = self.tespy_charge.busses[self.heat_bus_charge].P.val
 
                     if self.tespy_charge.res[-1] > 1e-3:
                         msg = 'Could not find a solution for input pair power=' + str(power) + ' pressure=' + str(pressure) + '.'
@@ -313,15 +315,15 @@ class model:
 
                 design_path = self.wdir + self.sc + '_discharge_design'
                 # set power of bus
-                self.tespy_discharge.imp_busses[self.power_bus_discharge].set_attr(P=power)
+                self.tespy_discharge.busses[self.power_bus_discharge].set_attr(P=power)
                 # set pressure at interface
-                self.tespy_discharge.imp_conns[self.pressure_conn_discharge].set_attr(p=pressure)
-                self.tespy_discharge.imp_conns[self.massflow_conn_discharge].set_attr(m=np.nan)
+                self.tespy_discharge.connections[self.pressure_conn_discharge].set_attr(p=pressure)
+                self.tespy_discharge.connections[self.massflow_conn_discharge].set_attr(m=np.nan)
 
                 try:
                     self.tespy_discharge.solve(mode='offdesign', design_path=design_path, init_path=design_path)
-                    m = self.tespy_discharge.imp_conns[self.massflow_conn_discharge].m.val_SI
-                    heat = self.tespy_discharge.imp_busses[self.heat_bus_discharge].P.val
+                    m = self.tespy_discharge.connections[self.massflow_conn_discharge].m.val_SI
+                    heat = self.tespy_discharge.busses[self.heat_bus_discharge].P.val
 
                     if self.tespy_discharge.res[-1] > 1e-3:
                         msg = 'Could not find a solution for input pair power=' + str(power) + ' pressure=' + str(pressure) + '.'
@@ -462,15 +464,15 @@ class model:
 
                 design_path = self.wdir + self.sc + '_charge_design'
                 # set power of bus
-                self.tespy_charge.imp_busses[self.power_bus_charge].set_attr(P=np.nan)
+                self.tespy_charge.busses[self.power_bus_charge].set_attr(P=np.nan)
                 # set pressure at interface
-                self.tespy_charge.imp_conns[self.pressure_conn_charge].set_attr(p=pressure)
-                self.tespy_charge.imp_conns[self.massflow_conn_charge].set_attr(m=mass_flow)
+                self.tespy_charge.connections[self.pressure_conn_charge].set_attr(p=pressure)
+                self.tespy_charge.connections[self.massflow_conn_charge].set_attr(m=mass_flow)
 
                 self.tespy_charge.solve(mode='offdesign', design_path=design_path)
 
-                power = self.tespy_charge.imp_busses[self.power_bus_charge].P.val
-                heat = self.tespy_charge.imp_busses[self.heat_bus_charge].P.val
+                power = self.tespy_charge.busses[self.power_bus_charge].P.val
+                heat = self.tespy_charge.busses[self.heat_bus_charge].P.val
                 msg = 'Calculation successful for mass flow=' + str(mass_flow) + ' pressure=' + str(pressure) + '. Power=' + str(power) + '.'
                 print(msg)
                 logging.debug(msg)
@@ -491,15 +493,15 @@ class model:
 
                 design_path = self.wdir + self.sc + '_discharge_design'
                 # set power of bus
-                self.tespy_discharge.imp_busses[self.power_bus_discharge].set_attr(P=np.nan)
+                self.tespy_discharge.busses[self.power_bus_discharge].set_attr(P=np.nan)
                 # set pressure at interface
-                self.tespy_discharge.imp_conns[self.pressure_conn_discharge].set_attr(p=pressure)
-                self.tespy_discharge.imp_conns[self.massflow_conn_discharge].set_attr(m=mass_flow)
+                self.tespy_discharge.connections[self.pressure_conn_discharge].set_attr(p=pressure)
+                self.tespy_discharge.connections[self.massflow_conn_discharge].set_attr(m=mass_flow)
 
                 self.tespy_discharge.solve(mode='offdesign', design_path=design_path)
 
-                power = self.tespy_discharge.imp_busses[self.power_bus_discharge].P.val
-                heat = self.tespy_discharge.imp_busses[self.heat_bus_discharge].P.val
+                power = self.tespy_discharge.busses[self.power_bus_discharge].P.val
+                heat = self.tespy_discharge.busses[self.heat_bus_discharge].P.val
                 msg = 'Calculation successful for mass flow=' + str(mass_flow) + ' pressure=' + str(pressure) + '. Power=' + str(power) + '.'
                 print(msg)
                 logging.debug(msg)

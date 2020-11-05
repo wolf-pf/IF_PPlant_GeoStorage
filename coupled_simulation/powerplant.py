@@ -282,10 +282,8 @@ class model:
                     heat = self.tespy_charge.busses[self.heat_bus_charge].P.val
 
                     if self.tespy_charge.res[-1] > 1e-3:
-                        msg = 'Could not find a solution for input pair power=' + str(power) + ' pressure=' + str(pressure) + '.'
-                        print(msg)
-                        logging.error(msg)
-                        return 0, 0, 0
+                        msg = 'Could not find a solution for input pair power=' + str(power) + ' pressure=' + str(pressure) + ', retrying.'
+                        raise TESPyNetworkError(msg)
                     elif m < self.m_min_charge:
                         msg = 'Mass flow for input pair power=' + str(power) + ' pressure=' + str(pressure) + ' below minimum mass flow.'
                         print(msg)
@@ -303,11 +301,53 @@ class model:
                         return m, power, heat
 
                 except:
-                    # except general errors in calculation
-                    msg = 'ERROR: Could not find a solution for input pair power=' + str(power) + ' pressure=' + str(pressure) + '.'
-                    print(msg)
-                    logging.error(msg)
-                    return 0, 0, 0
+
+                    try:
+                        # set power of bus
+                        self.tespy_charge.busses[self.power_bus_charge].set_attr(P=power_nominal_charge)
+                        # set pressure at interface
+                        self.tespy_charge.connections[self.pressure_conn_charge].set_attr(p=pressure_nominal_charge)
+                        self.tespy_charge.solve(mode='offdesign', init_path=design_path, design_path=design_path)
+
+                        power_iter = np.linspace(power_nominal_charge, power, 5)
+                        pressure_iter = np.linspace(pressure_nominal_charge, pressure, 5)
+
+                        for i in range(5):
+                            # set power of bus
+                            self.tespy_charge.busses[self.power_bus_charge].set_attr(P=power_iter[i])
+                            # set pressure at interface
+                            self.tespy_charge.connections[self.pressure_conn_charge].set_attr(p=pressure_iter[i])
+                            self.tespy_charge.solve(mode='offdesign', design_path=design_path)
+
+                        m = self.tespy_charge.connections[self.massflow_conn_charge].m.val_SI
+                        heat = self.tespy_charge.busses[self.heat_bus_charge].P.val
+
+                        if self.tespy_charge.res[-1] > 1e-3:
+                            msg = 'Could not find a solution for input pair power=' + str(power) + ' pressure=' + str(pressure) + ', retrying.'
+                            raise TESPyNetworkError(msg)
+                        elif m < self.m_min_charge:
+                            msg = 'Mass flow for input pair power=' + str(power) + ' pressure=' + str(pressure) + ' below minimum mass flow.'
+                            print(msg)
+                            logging.error(msg)
+                            return 0, 0, 0
+                        elif m > self.m_max_charge:
+                            msg = 'Mass flow for input pair power=' + str(power) + ' pressure=' + str(pressure) + ' above maximum mass flow. Adjusting power to match maximum allowed mass flow.'
+                            print(msg)
+                            logging.warning(msg)
+                            return self.get_power(self.m_max_charge, pressure, mode)
+                        else:
+                            msg = 'Calculation successful for power=' + str(power) + ' pressure=' + str(pressure) + '. Mass flow=' + str(m) + '.'
+                            print(msg)
+                            logging.debug(msg)
+                            return m, power, heat
+
+                    except:
+
+                        # except general errors in calculation
+                        msg = 'ERROR: Could not find a solution for input pair power=' + str(power) + ' pressure=' + str(pressure) + '.'
+                        print(msg)
+                        logging.error(msg)
+                        return 0, 0, 0
 
             elif mode == 'discharging':
                 if abs(power) < abs(self.power_nominal_discharge / 100):
@@ -326,10 +366,8 @@ class model:
                     heat = self.tespy_discharge.busses[self.heat_bus_discharge].P.val
 
                     if self.tespy_discharge.res[-1] > 1e-3:
-                        msg = 'Could not find a solution for input pair power=' + str(power) + ' pressure=' + str(pressure) + '.'
-                        print(msg)
-                        logging.error(msg)
-                        return 0, 0, 0
+                        msg = 'Could not find a solution for input pair power=' + str(power) + ' pressure=' + str(pressure) + ', retrying.'
+                        raise TESPyNetworkError(msg)
                     elif m < self.m_min_discharge:
                         msg = 'Mass flow for input pair power=' + str(power) + ' pressure=' + str(pressure) + ' below minimum mass flow.'
                         print(msg)
@@ -347,11 +385,52 @@ class model:
                         return m, power, heat
 
                 except:
-                    # except general errors in calculation
-                    msg = 'Could not find a solution for input pair power=' + str(power) + ' pressure=' + str(pressure) + '.'
-                    print(msg)
-                    logging.error(msg)
-                    return 0, 0, 0
+
+                    try:
+                        # set power of bus
+                        self.tespy_discharge.busses[self.power_bus_discharge].set_attr(P=power_nominal_discharge)
+                        # set pressure at interface
+                        self.tespy_discharge.connections[self.pressure_conn_discharge].set_attr(p=pressure_nominal_discharge)
+                        self.tespy_discharge.solve(mode='offdesign', init_path=design_path, design_path=design_path)
+
+                        power_iter = np.linspace(power_nominal_discharge, power, 5)
+                        pressure_iter = np.linspace(pressure_nominal_discharge, pressure, 5)
+
+                        for i in range(5):
+                            # set power of bus
+                            self.tespy_discharge.busses[self.power_bus_discharge].set_attr(P=power_iter[i])
+                            # set pressure at interface
+                            self.tespy_discharge.connections[self.pressure_conn_discharge].set_attr(p=pressure_iter[i])
+                            self.tespy_discharge.solve(mode='offdesign', design_path=design_path)
+
+                        m = self.tespy_discharge.connections[self.massflow_conn_discharge].m.val_SI
+                        heat = self.tespy_discharge.busses[self.heat_bus_discharge].P.val
+
+                        if self.tespy_discharge.res[-1] > 1e-3:
+                            msg = 'Could not find a solution for input pair power=' + str(power) + ' pressure=' + str(pressure) + '.'
+                            raise TESPyNetworkError(msg)
+                        elif m < self.m_min_discharge:
+                            msg = 'Mass flow for input pair power=' + str(power) + ' pressure=' + str(pressure) + ' below minimum mass flow.'
+                            print(msg)
+                            logging.error(msg)
+                            return 0, 0, 0
+                        elif m > self.m_max_discharge:
+                            msg = 'Mass flow for input pair power=' + str(power) + ' pressure=' + str(pressure) + ' above maximum mass flow. Adjusting power to match maximum allowed mass flow.'
+                            print(msg)
+                            logging.warning(msg)
+                            return self.get_power(self.m_max_discharge, pressure, mode)
+                        else:
+                            msg = 'Calculation successful for power=' + str(power) + ' pressure=' + str(pressure) + '. Mass flow=' + str(m) + '.'
+                            print(msg)
+                            logging.debug(msg)
+                            return m, power, heat
+
+                    except:
+                        # except general errors in calculation
+                        msg = 'Could not find a solution for input pair power=' + str(power) + ' pressure=' + str(pressure) + '.'
+                        print(msg)
+                        logging.error(msg)
+                        return 0, 0, 0
 
             else:
                 raise ValueError('Mode must be charging or discharging.')

@@ -207,7 +207,6 @@ class model:
             num = int(abs(pressure - pressure_conn.p.val) // 10) + 1
             pressure_range = np.linspace(pressure, pressure_conn.p.val, num, endpoint=False)
             for pressure_step in pressure_range[::-1]:
-                print(pressure_step, pressure, pressure_nominal)
                 pressure_conn.set_attr(p=pressure_step)
                 model.solve(mode='offdesign', design_path=design_path)
 
@@ -217,7 +216,6 @@ class model:
                 abs(power - power_bus.P.val) // abs(0.2 * power_nominal)) + 1
             power_range = np.linspace(power, power_bus.P.val, num, endpoint=False)
             for power_step in power_range[::-1]:
-                print(power_step, power, power_nominal)
                 power_bus.set_attr(P=power_step)
                 model.solve(mode='offdesign', design_path=design_path)
 
@@ -226,7 +224,7 @@ class model:
             return self.check_results(
                 model, m, massflow_min, massflow_max, power, pressure, heat, remeber_mode)
 
-        except (AttributeError) as e:
+        except (ValueError, TESPyNetworkError) as e:
             # except general errors in calculation
             msg = (
                 'ERROR: Could not find a solution for input pair power=' +
@@ -358,7 +356,6 @@ class model:
             num = int(abs(pressure - pressure_conn.p.val) // 10) + 1
             pressure_range = np.linspace(pressure, pressure_conn.p.val, num, endpoint=False)
             for pressure_step in pressure_range[::-1]:
-                print(pressure_step, pressure, pressure_nominal)
                 pressure_conn.set_attr(p=pressure_step)
                 model.solve(mode='offdesign', design_path=design_path)
 

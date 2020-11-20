@@ -361,8 +361,13 @@ class model:
 
             # unset power of bus and set massflow instead
             power_bus.set_attr(P=np.nan)
-            massflow_conn.set_attr(m=mass_flow)
-            model.solve(mode='offdesign', design_path=design_path)
+            # adjust mass flow value in steps of 5 % relative to nominal power
+            num = int(
+                abs(mass_flow - massflow_conn.m.val) // abs(0.05 * massflow_nominal)) + 1
+            mass_flow_range = np.linspace(mass_flow, massflow_conn.m.val, num, endpoint=False)
+            for mass_step in mass_flow_range[::-1]:
+                massflow_conn.set_attr(m=mass_step)
+                model.solve(mode='offdesign', design_path=design_path)
 
             power = power_bus.P.val
             heat = heat_bus.P.val
@@ -377,11 +382,12 @@ class model:
         except (ValueError, TESPyNetworkError) as e:
             # except general errors in calculation
             msg = (
-                'ERROR: Could not find a solution for input pair power=' +
-                str(power) + ' pressure=' + str(pressure) + '.'
+                'ERROR: Could not find a solution for input pair mass flow=' +
+                str(mass_flow) + ' pressure=' + str(pressure) + '.'
             )
             print(msg)
             logging.error(msg)
+            massflow_conn.set_attr(m=None)
             power_bus.set_attr(P=power_nominal)
             pressure_conn.set_attr(p=pressure_nominal)
             model.solve('offdesign', init_path=design_path, design_path=design_path)
